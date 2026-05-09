@@ -2,6 +2,8 @@
 
 这是一个用于 Moonlight + Sunshine 串流的压力测试网页。页面会在持续生成变化中的高复杂度图案，从而测试在不同帧数、不同码率下的编、解码器延迟。并同时对网络进行压力测试，测试当前网络环境可以支持多高的码率串流。
 
+<img width="1127" height="827" alt="demo" src="https://github.com/user-attachments/assets/919d1a8c-f8d4-4909-bd10-221e1df6bf6e" />
+
 ## 项目动机
 
 这个项目的目的，是提供一个稳定、可重复、可调参的视觉负载源，用来观察
