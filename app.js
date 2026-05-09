@@ -14,6 +14,77 @@ const DEFAULTS = {
   vSyncPace: false,
 };
 
+const LOCALES = {
+  zh: {
+    htmlLang: "zh-CN",
+    appTitle: "Streaming Stress",
+    gridCellsLabel: "网格密度",
+    gridCellsDesc: "短边方向上的网格数量。默认 137 是你测出的高码率组合。",
+    targetFpsLabel: "目标帧率",
+    targetFpsDesc: "请求的渲染节奏。浏览器实际呈现仍受显示器、合成器和系统限制。",
+    motionLabel: "运动强度",
+    motionDesc: "帧与帧之间变化的强度。默认 20 可以最大化画面变化。",
+    renderWidthLabel: "渲染宽度 %",
+    renderWidthDesc: "Canvas 宽度占可用区域的百分比。默认 30 是你测出的 165 Hz 设置。",
+    renderHeightLabel: "渲染高度 %",
+    renderHeightDesc: "Canvas 高度占可用区域的百分比。默认 50 是你测出的 165 Hz 设置。",
+    advancedSummary: "高级选项",
+    complexityLabel: "复杂度",
+    complexityDesc: "每个像素上的着色器噪声层数。默认 1 可把 GPU 成本压低。",
+    pixelRatioLabel: "像素比上限",
+    pixelRatioDesc: "限制高 DPI 下的渲染分辨率。默认 1 可以避免 2 带来的明显掉帧。",
+    internalScaleLabel: "内部缩放 %",
+    internalScaleDesc: "Canvas 内部实际渲染分辨率。降低它可以让更大的显示区域更省性能。",
+    paletteShiftLabel: "色相偏移",
+    paletteShiftDesc: "颜色相位偏移。对性能影响很小。",
+    showHudLabel: "显示 HUD",
+    vSyncPaceLabel: "按目标帧率限速",
+    fullscreenButtonEnter: "全屏压力模式",
+    fullscreenButtonExit: "退出全屏",
+    shortcutHelp: "快捷键：F10 / F 进入全屏，Esc / Q 退出全屏。",
+    statusInitializing: "正在初始化 WebGL...",
+    statusReady: "WebGL 已就绪",
+    statusErrorPrefix: "错误：",
+    statusWebgl2Unavailable: "当前浏览器不支持 WebGL2。",
+    hud: ({ frame, fps, targetFps, canvasWidth, canvasHeight, renderWidth, renderHeight, internalScale, gridCells, motion }) =>
+      `帧 ${frame}\nFPS ${fps.toFixed(1)} / 目标 ${targetFps}\n画布 ${canvasWidth} x ${canvasHeight}\n区域 ${renderWidth}% x ${renderHeight}% 缩放 ${internalScale}%\n网格 ${gridCells} 运动 ${motion}`,
+  },
+  en: {
+    htmlLang: "en",
+    appTitle: "Streaming Stress",
+    gridCellsLabel: "Grid cells",
+    gridCellsDesc: "Cell count along the shorter side. The default 137 matches your high-bitrate preset.",
+    targetFpsLabel: "Target FPS",
+    targetFpsDesc: "Requested pacing. Actual presentation is still bounded by the display, compositor, and OS.",
+    motionLabel: "Motion",
+    motionDesc: "Frame-to-frame change intensity. The default 20 maximizes visual change.",
+    renderWidthLabel: "Render width %",
+    renderWidthDesc: "Canvas width as a percentage of the available area. Default 30 matches your 165 Hz test.",
+    renderHeightLabel: "Render height %",
+    renderHeightDesc: "Canvas height as a percentage of the available area. Default 50 matches your 165 Hz test.",
+    advancedSummary: "Advanced",
+    complexityLabel: "Complexity",
+    complexityDesc: "Noise layers per pixel. Default 1 keeps GPU cost low.",
+    pixelRatioLabel: "Pixel ratio cap",
+    pixelRatioDesc: "Caps high-DPI render resolution. Default 1 avoids the FPS drop seen at 2.",
+    internalScaleLabel: "Internal scale %",
+    internalScaleDesc: "Actual render resolution inside the canvas. Lower values keep larger areas cheaper.",
+    paletteShiftLabel: "Palette shift",
+    paletteShiftDesc: "Color phase offset. Low performance impact.",
+    showHudLabel: "Show HUD",
+    vSyncPaceLabel: "Respect target FPS",
+    fullscreenButtonEnter: "Fullscreen stress mode",
+    fullscreenButtonExit: "Exit fullscreen",
+    shortcutHelp: "Shortcuts: F10 / F enter fullscreen, Esc / Q exit fullscreen.",
+    statusInitializing: "Initializing WebGL...",
+    statusReady: "WebGL ready",
+    statusErrorPrefix: "Error: ",
+    statusWebgl2Unavailable: "WebGL2 is not available in this browser.",
+    hud: ({ frame, fps, targetFps, canvasWidth, canvasHeight, renderWidth, renderHeight, internalScale, gridCells, motion }) =>
+      `frame ${frame}\nFPS ${fps.toFixed(1)} / target ${targetFps}\ncanvas ${canvasWidth} x ${canvasHeight}\narea ${renderWidth}% x ${renderHeight}% scale ${internalScale}%\ngrid ${gridCells} motion ${motion}`,
+  },
+};
+
 const vertexSource = `#version 300 es
 in vec2 aPosition;
 out vec2 vUv;
@@ -99,8 +170,13 @@ const canvas = document.getElementById("stressCanvas");
 const hud = document.getElementById("hud");
 const statusEl = document.getElementById("status");
 const fullscreenButton = document.getElementById("fullscreenButton");
+const langButtons = Array.from(document.querySelectorAll("[data-lang]"));
+const i18nNodes = Array.from(document.querySelectorAll("[data-i18n]"));
 
 const state = { ...DEFAULTS };
+const uiState = {
+  language: "zh",
+};
 let gl;
 let program;
 let vao;
@@ -109,6 +185,65 @@ let frame = 0;
 let lastFrameTime = performance.now();
 let fps = 0;
 let nextAllowedFrame = 0;
+
+function locale() {
+  return LOCALES[uiState.language] || LOCALES.zh;
+}
+
+function translate(key) {
+  return locale()[key] ?? LOCALES.zh[key] ?? key;
+}
+
+function applyLanguage(lang) {
+  uiState.language = LOCALES[lang] ? lang : "zh";
+  const current = locale();
+  document.documentElement.lang = current.htmlLang;
+  for (const node of i18nNodes) {
+    const key = node.dataset.i18n;
+    if (key === "fullscreenButton" || key === "statusInitializing") {
+      continue;
+    }
+    const value = current[key];
+    if (typeof value === "string") {
+      node.textContent = value;
+    }
+  }
+  for (const button of langButtons) {
+    button.classList.toggle("active", button.dataset.lang === uiState.language);
+  }
+  fullscreenButton.textContent = document.fullscreenElement === stage
+    ? current.fullscreenButtonExit
+    : current.fullscreenButtonEnter;
+  if (statusEl.dataset.mode === "static") {
+    const statusKey = statusEl.dataset.statusKey || "statusReady";
+    const statusKind = statusEl.dataset.statusKind || "text";
+    if (statusKind === "error") {
+      if (statusKey === "statusWebgl2Unavailable") {
+        statusEl.textContent = current.statusErrorPrefix + current.statusWebgl2Unavailable;
+      } else {
+        statusEl.textContent = current.statusErrorPrefix + (statusEl.dataset.statusMessage || "");
+      }
+    } else {
+      statusEl.textContent = current[statusKey] || current.statusReady;
+    }
+  }
+}
+
+function setStaticStatus(key, kind = "text", message = "") {
+  statusEl.dataset.mode = "static";
+  statusEl.dataset.statusKey = key;
+  statusEl.dataset.statusKind = kind;
+  statusEl.dataset.statusMessage = message;
+  if (kind === "error") {
+    if (key === "statusWebgl2Unavailable") {
+      statusEl.textContent = translate("statusErrorPrefix") + translate("statusWebgl2Unavailable");
+    } else {
+      statusEl.textContent = translate("statusErrorPrefix") + message;
+    }
+  } else {
+    statusEl.textContent = translate(key) || translate("statusReady");
+  }
+}
 
 function initControl(id, parser = Number) {
   const slider = document.getElementById(id);
@@ -251,12 +386,23 @@ function render(now) {
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 
   if (state.showHud && frame % 10 === 0) {
-    const text = `frame ${frame}
-fps ${fps.toFixed(1)} / target ${state.targetFps}
-canvas ${canvas.width} x ${canvas.height}
-area ${state.renderWidth}% x ${state.renderHeight}% scale ${state.internalScale}%
-grid ${state.gridCells} motion ${state.motion}`;
+    const text = translate("hud")({
+      frame,
+      fps,
+      targetFps: Math.round(state.targetFps),
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      renderWidth: Math.round(state.renderWidth),
+      renderHeight: Math.round(state.renderHeight),
+      internalScale: Math.round(state.internalScale),
+      gridCells: Math.round(state.gridCells),
+      motion: Math.round(state.motion),
+    });
     hud.textContent = text;
+    hud.style.display = state.showHud ? "block" : "none";
+    statusEl.dataset.mode = "dynamic";
+    statusEl.dataset.statusKey = "";
+    statusEl.dataset.statusKind = "";
     statusEl.textContent = text;
   }
 }
@@ -264,7 +410,9 @@ grid ${state.gridCells} motion ${state.motion}`;
 function updateFullscreenState() {
   const active = document.fullscreenElement === stage;
   app.classList.toggle("fullscreen", active);
-  fullscreenButton.textContent = active ? "Exit fullscreen stress mode" : "Fullscreen stress mode";
+  fullscreenButton.textContent = active
+    ? translate("fullscreenButtonExit")
+    : translate("fullscreenButtonEnter");
   resizeCanvas();
 }
 
@@ -312,6 +460,28 @@ document.getElementById("vSyncPace").addEventListener("change", (event) => {
 });
 
 try {
+  for (const button of langButtons) {
+    button.addEventListener("click", () => {
+      applyLanguage(button.dataset.lang || "zh");
+      updateFullscreenState();
+      if (statusEl.dataset.mode === "dynamic") {
+        const text = translate("hud")({
+          frame,
+          fps,
+          targetFps: Math.round(state.targetFps),
+          canvasWidth: canvas.width,
+          canvasHeight: canvas.height,
+          renderWidth: Math.round(state.renderWidth),
+          renderHeight: Math.round(state.renderHeight),
+          internalScale: Math.round(state.internalScale),
+          gridCells: Math.round(state.gridCells),
+          motion: Math.round(state.motion),
+        });
+        hud.textContent = text;
+        statusEl.textContent = text;
+      }
+    });
+  }
   initControl("gridCells");
   initControl("targetFps");
   initControl("complexity");
@@ -321,10 +491,20 @@ try {
   initControl("renderHeight");
   initControl("internalScale");
   initControl("paletteShift");
+  applyLanguage("zh");
   setupWebGL();
   resizeCanvas();
-  statusEl.textContent = "WebGL ready";
+  setStaticStatus("statusReady");
+  fullscreenButton.textContent = translate("fullscreenButtonEnter");
   requestAnimationFrame(render);
 } catch (error) {
-  statusEl.textContent = error instanceof Error ? error.message : String(error);
+  if (error instanceof Error && error.message === "WebGL2 is not available in this browser.") {
+    setStaticStatus("statusWebgl2Unavailable", "error");
+  } else {
+    setStaticStatus(
+      "statusGenericError",
+      "error",
+      error instanceof Error ? error.message : String(error),
+    );
+  }
 }

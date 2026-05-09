@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,101 +9,107 @@
   <body>
     <main class="app" id="app">
       <aside class="panel" id="panel">
-        <h1>Streaming Stress</h1>
+        <div class="panel-top">
+          <h1 data-i18n="appTitle">Streaming Stress</h1>
+          <div class="lang-switch" role="tablist" aria-label="Language">
+            <button type="button" data-lang="zh">中文</button>
+            <button type="button" data-lang="en">English</button>
+          </div>
+        </div>
 
         <section class="control">
           <div class="control-head">
-            <label for="gridCells">Grid cells</label>
+            <label for="gridCells"><span data-i18n="gridCellsLabel">网格密度</span></label>
             <input id="gridCellsValue" class="value-input" inputmode="numeric">
           </div>
           <input id="gridCells" type="range" min="24" max="520" step="1">
-          <p>Cell density across the shorter canvas side. The default 137 keeps your measured 165 Hz / 600 Mbps balance.</p>
+          <p data-i18n="gridCellsDesc">短边方向上的网格数量。默认 137 是你测出的高码率组合。</p>
         </section>
 
         <section class="control">
           <div class="control-head">
-            <label for="targetFps">Target FPS</label>
+            <label for="targetFps"><span data-i18n="targetFpsLabel">目标帧率</span></label>
             <input id="targetFpsValue" class="value-input" inputmode="numeric">
           </div>
           <input id="targetFps" type="range" min="1" max="500" step="1">
-          <p>Requested render pacing. The browser can only present up to the active display and compositor limit.</p>
+          <p data-i18n="targetFpsDesc">请求的渲染节奏。浏览器实际呈现仍受显示器、合成器和系统限制。</p>
         </section>
 
         <section class="control">
           <div class="control-head">
-            <label for="motion">Motion</label>
+            <label for="motion"><span data-i18n="motionLabel">运动强度</span></label>
             <input id="motionValue" class="value-input" inputmode="numeric">
           </div>
           <input id="motion" type="range" min="1" max="20" step="1">
-          <p>How aggressively the pattern changes between frames. Default 20 maximizes frame-to-frame difference.</p>
+          <p data-i18n="motionDesc">帧与帧之间变化的强度。默认 20 可以最大化画面变化。</p>
         </section>
 
         <section class="control">
           <div class="control-head">
-            <label for="renderWidth">Render width %</label>
+            <label for="renderWidth"><span data-i18n="renderWidthLabel">渲染宽度 %</span></label>
             <input id="renderWidthValue" class="value-input" inputmode="numeric">
           </div>
           <input id="renderWidth" type="range" min="10" max="100" step="1">
-          <p>Canvas width as a percentage of the available stage. Default 30 is your measured 165 Hz setting.</p>
+          <p data-i18n="renderWidthDesc">Canvas 宽度占可用区域的百分比。默认 30 是你测出的 165 Hz 设置。</p>
         </section>
 
         <section class="control">
           <div class="control-head">
-            <label for="renderHeight">Render height %</label>
+            <label for="renderHeight"><span data-i18n="renderHeightLabel">渲染高度 %</span></label>
             <input id="renderHeightValue" class="value-input" inputmode="numeric">
           </div>
           <input id="renderHeight" type="range" min="10" max="100" step="1">
-          <p>Canvas height as a percentage of the available stage. Default 50 is your measured 165 Hz setting.</p>
+          <p data-i18n="renderHeightDesc">Canvas 高度占可用区域的百分比。默认 50 是你测出的 165 Hz 设置。</p>
         </section>
 
         <details class="advanced">
-          <summary>Advanced</summary>
+          <summary data-i18n="advancedSummary">高级选项</summary>
 
           <section class="control">
             <div class="control-head">
-              <label for="complexity">Complexity</label>
+              <label for="complexity"><span data-i18n="complexityLabel">复杂度</span></label>
               <input id="complexityValue" class="value-input" inputmode="numeric">
             </div>
             <input id="complexity" type="range" min="1" max="10" step="1">
-            <p>Shader noise layers per pixel. Default 1 keeps GPU cost low.</p>
+            <p data-i18n="complexityDesc">每个像素上的着色器噪声层数。默认 1 可把 GPU 成本压低。</p>
           </section>
 
           <section class="control">
             <div class="control-head">
-              <label for="pixelRatio">Pixel ratio cap</label>
+              <label for="pixelRatio"><span data-i18n="pixelRatioLabel">像素比上限</span></label>
               <input id="pixelRatioValue" class="value-input" inputmode="decimal">
             </div>
             <input id="pixelRatio" type="range" min="1" max="3" step="0.25">
-            <p>Caps high-DPI render resolution. Default 1 avoids the large FPS drop seen at 2.</p>
+            <p data-i18n="pixelRatioDesc">限制高 DPI 下的渲染分辨率。默认 1 可以避免 2 带来的明显掉帧。</p>
           </section>
 
           <section class="control">
             <div class="control-head">
-              <label for="internalScale">Internal scale %</label>
+              <label for="internalScale"><span data-i18n="internalScaleLabel">内部缩放 %</span></label>
               <input id="internalScaleValue" class="value-input" inputmode="numeric">
             </div>
             <input id="internalScale" type="range" min="25" max="100" step="1">
-            <p>Actual WebGL resolution inside the displayed canvas. Lower this to make large areas faster.</p>
+            <p data-i18n="internalScaleDesc">Canvas 内部实际渲染分辨率。降低它可以让更大的显示区域更省性能。</p>
           </section>
 
           <section class="control">
             <div class="control-head">
-              <label for="paletteShift">Palette shift</label>
+              <label for="paletteShift"><span data-i18n="paletteShiftLabel">色相偏移</span></label>
               <input id="paletteShiftValue" class="value-input" inputmode="numeric">
             </div>
             <input id="paletteShift" type="range" min="0" max="360" step="1">
-            <p>Color phase offset. It has little performance impact.</p>
+            <p data-i18n="paletteShiftDesc">颜色相位偏移。对性能影响很小。</p>
           </section>
         </details>
 
         <div class="toggles">
-          <label><input id="showHud" type="checkbox"> Show HUD</label>
-          <label><input id="vSyncPace" type="checkbox"> Respect target FPS</label>
+          <label><input id="showHud" type="checkbox"> <span data-i18n="showHudLabel">显示 HUD</span></label>
+          <label><input id="vSyncPace" type="checkbox"> <span data-i18n="vSyncPaceLabel">按目标帧率限速</span></label>
         </div>
 
-        <button id="fullscreenButton" type="button">Fullscreen stress mode</button>
-        <p class="shortcut-help">Shortcuts: F10 / F enter fullscreen, Esc / Q exit fullscreen.</p>
-        <div class="status" id="status">Initializing WebGL...</div>
+        <button id="fullscreenButton" type="button" data-i18n="fullscreenButton">全屏压力模式</button>
+        <p class="shortcut-help" data-i18n="shortcutHelp">快捷键：F10 / F 进入全屏，Esc / Q 退出全屏。</p>
+        <div class="status" id="status" data-i18n="statusInitializing">正在初始化 WebGL...</div>
       </aside>
 
       <section class="stage" id="stage">

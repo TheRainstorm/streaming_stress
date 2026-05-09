@@ -1,73 +1,74 @@
 # Streaming Stress
 
-WebGL visual stress page for testing Moonlight + Sunshine streaming.
+这是一个用于 Moonlight + Sunshine 串流的压力测试网页。页面会在持续生成变化中的高复杂度图案，从而测试在不同帧数、不同码率下的编、解码器延迟。并同时对网络进行压力测试，测试当前网络环境可以支持多高的码率串流。
 
-The page renders a continuously changing, high-detail QR-like pattern directly
-on the GPU. It is designed to fill the encoder with changing pixels while
-keeping CPU work low.
+## 项目动机
 
-## Run
+这个项目的目的，是提供一个稳定、可重复、可调参的视觉负载源，用来观察
+串流在不同码率、帧率、显示比例和画面变化规律下的表现。
 
-Open [index.html](./index.html) in a modern browser.
+实际测试里，瓶颈通常不只是“画面复杂不复杂”，还包括编码器负载、显示刷新、
+VSync、像素密度和区域大小之间的组合关系。把这些变量集中在一个页面里，才
+方便快速找到一组能把码率和帧率推到目标位置的参数。
 
-For stricter browser behavior, run a static server from this directory:
+页面会在 GPU 上持续生成变化中的高复杂度图案，同时尽量降低 CPU 占用。
+
+## 运行
+
+直接在现代浏览器中打开 [index.html](./index.html)。
+
+如果你希望更稳定地测试，可以在当前目录启动静态服务器：
 
 ```bash
 python -m http.server 8000
 ```
 
-Then open:
+然后访问：
 
 ```text
 http://localhost:8000
 ```
 
-## Modes
+## 界面
 
-- Normal mode: controls are on the left, the WebGL render surface fills the
-  remaining area on the right.
-- Fullscreen stress mode: the canvas enters browser fullscreen and the whole
-  display becomes changing pixels.
+- 普通模式下，左侧是参数面板，右侧是 WebGL 渲染区域。
+- 全屏模式下，整个屏幕都会显示变化画面。
+- 页面默认使用中文。
 
-## Controls
+## 参数
 
-- `Grid cells`: cell density. Default `137` is the measured high-bitrate preset.
-- `Target FPS`: frame pacing target. Browser rendering is still capped by the
-  display, browser compositor, GPU, and OS.
-- `Motion`: animation speed. Default `20` maximizes frame-to-frame difference.
-- `Render width %`: canvas width as a percentage of the available display area.
-- `Render height %`: canvas height as a percentage of the available display
-  area.
-- `Show HUD`: overlays frame/FPS/render-size status.
-- `Respect target FPS`: caps rendering to `Target FPS`. Set `Target FPS` high,
-  such as `500`, when you want the browser to run at the display limit.
+- `Grid cells`：网格密度，默认 `137`。
+- `Target FPS`：目标刷新率，默认 `165`。
+- `Motion`：变化速度，默认 `20`。
+- `Render width %`：渲染区域宽度占可用区域的百分比，默认 `30`。
+- `Render height %`：渲染区域高度占可用区域的百分比，默认 `50`。
+- `Show HUD`：显示状态信息。
+- `Respect target FPS`：按目标帧率限速。想冲极限时建议关闭。
 
-Default high-bitrate preset:
+## 高性能默认值
 
-- `Grid cells`: `137`
-- `Target FPS`: `165`
-- `Motion`: `20`
-- `Render width %`: `30`
-- `Render height %`: `50`
+- `Grid cells`：`137`
+- `Target FPS`：`165`
+- `Motion`：`20`
+- `Render width %`：`30`
+- `Render height %`：`50`
 
-Advanced options are hidden by default:
+## 高级选项
 
-- `Complexity`: default `1`; higher values add shader work.
-- `Pixel ratio cap`: default `1`; higher values increase rendered pixels and
-  can sharply reduce FPS.
-- `Internal scale %`: actual WebGL resolution inside the displayed canvas. Lower
-  this to make a larger displayed area cheaper, at the cost of detail.
-- `Palette shift`: default `0`; color phase offset with little performance
-  impact.
+默认隐藏在 `Advanced` 中：
 
-For maximum FPS, keep `Respect target FPS` disabled. Browser WebGL rendering is
-presented through `requestAnimationFrame`, so it usually cannot exceed the
-active display refresh rate even when the shader is fast enough.
+- `Complexity`：默认 `1`，更高会增加着色器计算。
+- `Pixel ratio cap`：默认 `1`，更高会明显增加渲染像素数。
+- `Internal scale %`：Canvas 内部实际渲染分辨率。降低它可以在更大显示区域下保住帧率，但会损失细节。
+- `Palette shift`：默认 `0`，对性能影响很小。
 
-Every numeric control has an editable value box. Type a value and press Enter,
-or click away from the field, to apply it.
+## 快捷键
 
-Shortcuts:
+- `F10` 或 `F`：切换全屏。
+- `Esc` 或 `Q`：退出全屏。
 
-- `F10` or `F`: enter or exit fullscreen stress mode.
-- `Esc` or `Q`: exit fullscreen stress mode.
+## 说明
+
+浏览器里的 WebGL 最终还是受 `requestAnimationFrame`、显示器刷新率、浏览器合成器和系统 VSync 影响。
+如果把显示区域继续放大，而 shader 和像素数都不降，帧率掉下去是正常的。
+想在更大面积下尽量保帧，优先降低 `Internal scale %` 和 `Pixel ratio cap`。
