@@ -31,21 +31,34 @@ http://localhost:8000
 
 ## Controls
 
-- `Grid cells`: QR-like cell density. Higher values create more spatial detail.
+- `Grid cells`: cell density. Default `137` is the measured high-bitrate preset.
 - `Target FPS`: frame pacing target. Browser rendering is still capped by the
   display, browser compositor, GPU, and OS.
-- `Complexity`: number of shader noise layers. Higher values increase GPU work
-  and visual entropy.
-- `Motion`: animation speed. Higher values make adjacent frames differ more.
-- `Pixel ratio cap`: maximum device pixel ratio used for the canvas. Higher
-  values increase real rendered pixels.
+- `Motion`: animation speed. Default `20` maximizes frame-to-frame difference.
 - `Render width %`: canvas width as a percentage of the available display area.
 - `Render height %`: canvas height as a percentage of the available display
   area.
-- `Palette shift`: color phase offset for the generated pattern.
 - `Show HUD`: overlays frame/FPS/render-size status.
 - `Respect target FPS`: caps rendering to `Target FPS`. Set `Target FPS` high,
   such as `500`, when you want the browser to run at the display limit.
+
+Default high-bitrate preset:
+
+- `Grid cells`: `137`
+- `Target FPS`: `165`
+- `Motion`: `20`
+- `Render width %`: `30`
+- `Render height %`: `50`
+
+Advanced options are hidden by default:
+
+- `Complexity`: default `1`; higher values add shader work.
+- `Pixel ratio cap`: default `1`; higher values increase rendered pixels and
+  can sharply reduce FPS.
+- `Internal scale %`: actual WebGL resolution inside the displayed canvas. Lower
+  this to make a larger displayed area cheaper, at the cost of detail.
+- `Palette shift`: default `0`; color phase offset with little performance
+  impact.
 
 For maximum FPS, keep `Respect target FPS` disabled. Browser WebGL rendering is
 presented through `requestAnimationFrame`, so it usually cannot exceed the
@@ -53,3 +66,8 @@ active display refresh rate even when the shader is fast enough.
 
 Every numeric control has an editable value box. Type a value and press Enter,
 or click away from the field, to apply it.
+
+Shortcuts:
+
+- `F10` or `F`: enter or exit fullscreen stress mode.
+- `Esc` or `Q`: exit fullscreen stress mode.

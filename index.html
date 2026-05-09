@@ -17,7 +17,7 @@
             <input id="gridCellsValue" class="value-input" inputmode="numeric">
           </div>
           <input id="gridCells" type="range" min="24" max="520" step="1">
-          <p>QR-like cells across the shorter canvas side. More cells add spatial detail and can raise encoder bitrate.</p>
+          <p>Cell density across the shorter canvas side. The default 137 keeps your measured 165 Hz / 600 Mbps balance.</p>
         </section>
 
         <section class="control">
@@ -31,29 +31,11 @@
 
         <section class="control">
           <div class="control-head">
-            <label for="complexity">Complexity</label>
-            <input id="complexityValue" class="value-input" inputmode="numeric">
-          </div>
-          <input id="complexity" type="range" min="1" max="10" step="1">
-          <p>Shader noise layers per pixel. Increase this when the GPU has headroom and bitrate is not saturated.</p>
-        </section>
-
-        <section class="control">
-          <div class="control-head">
             <label for="motion">Motion</label>
             <input id="motionValue" class="value-input" inputmode="numeric">
           </div>
           <input id="motion" type="range" min="1" max="20" step="1">
-          <p>How aggressively the pattern changes between frames. Higher values reduce inter-frame similarity.</p>
-        </section>
-
-        <section class="control">
-          <div class="control-head">
-            <label for="pixelRatio">Pixel ratio cap</label>
-            <input id="pixelRatioValue" class="value-input" inputmode="decimal">
-          </div>
-          <input id="pixelRatio" type="range" min="1" max="3" step="0.25">
-          <p>Caps the canvas render resolution. Use higher values to increase real GPU pixels on high-DPI displays.</p>
+          <p>How aggressively the pattern changes between frames. Default 20 maximizes frame-to-frame difference.</p>
         </section>
 
         <section class="control">
@@ -62,7 +44,7 @@
             <input id="renderWidthValue" class="value-input" inputmode="numeric">
           </div>
           <input id="renderWidth" type="range" min="10" max="100" step="1">
-          <p>Canvas width as a percentage of the available stage. The canvas remains centered.</p>
+          <p>Canvas width as a percentage of the available stage. Default 30 is your measured 165 Hz setting.</p>
         </section>
 
         <section class="control">
@@ -71,17 +53,48 @@
             <input id="renderHeightValue" class="value-input" inputmode="numeric">
           </div>
           <input id="renderHeight" type="range" min="10" max="100" step="1">
-          <p>Canvas height as a percentage of the available stage. Lower values reduce rendered pixels and GPU load.</p>
+          <p>Canvas height as a percentage of the available stage. Default 50 is your measured 165 Hz setting.</p>
         </section>
 
-        <section class="control">
-          <div class="control-head">
-            <label for="paletteShift">Palette shift</label>
-            <input id="paletteShiftValue" class="value-input" inputmode="numeric">
-          </div>
-          <input id="paletteShift" type="range" min="0" max="360" step="1">
-          <p>Color phase offset. This changes the generated color distribution without changing geometry.</p>
-        </section>
+        <details class="advanced">
+          <summary>Advanced</summary>
+
+          <section class="control">
+            <div class="control-head">
+              <label for="complexity">Complexity</label>
+              <input id="complexityValue" class="value-input" inputmode="numeric">
+            </div>
+            <input id="complexity" type="range" min="1" max="10" step="1">
+            <p>Shader noise layers per pixel. Default 1 keeps GPU cost low.</p>
+          </section>
+
+          <section class="control">
+            <div class="control-head">
+              <label for="pixelRatio">Pixel ratio cap</label>
+              <input id="pixelRatioValue" class="value-input" inputmode="decimal">
+            </div>
+            <input id="pixelRatio" type="range" min="1" max="3" step="0.25">
+            <p>Caps high-DPI render resolution. Default 1 avoids the large FPS drop seen at 2.</p>
+          </section>
+
+          <section class="control">
+            <div class="control-head">
+              <label for="internalScale">Internal scale %</label>
+              <input id="internalScaleValue" class="value-input" inputmode="numeric">
+            </div>
+            <input id="internalScale" type="range" min="25" max="100" step="1">
+            <p>Actual WebGL resolution inside the displayed canvas. Lower this to make large areas faster.</p>
+          </section>
+
+          <section class="control">
+            <div class="control-head">
+              <label for="paletteShift">Palette shift</label>
+              <input id="paletteShiftValue" class="value-input" inputmode="numeric">
+            </div>
+            <input id="paletteShift" type="range" min="0" max="360" step="1">
+            <p>Color phase offset. It has little performance impact.</p>
+          </section>
+        </details>
 
         <div class="toggles">
           <label><input id="showHud" type="checkbox"> Show HUD</label>
@@ -89,6 +102,7 @@
         </div>
 
         <button id="fullscreenButton" type="button">Fullscreen stress mode</button>
+        <p class="shortcut-help">Shortcuts: F10 / F enter fullscreen, Esc / Q exit fullscreen.</p>
         <div class="status" id="status">Initializing WebGL...</div>
       </aside>
 

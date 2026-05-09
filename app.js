@@ -1,13 +1,14 @@
 "use strict";
 
 const DEFAULTS = {
-  gridCells: 144,
+  gridCells: 137,
   targetFps: 165,
-  complexity: 7,
-  motion: 12,
+  complexity: 1,
+  motion: 20,
   pixelRatio: 1,
-  renderWidth: 100,
-  renderHeight: 100,
+  renderWidth: 30,
+  renderHeight: 50,
+  internalScale: 100,
   paletteShift: 0,
   showHud: true,
   vSyncPace: false,
@@ -52,21 +53,6 @@ vec3 palette(float t) {
   return a + b * cos(6.2831853 * (c * t + d));
 }
 
-float finder(vec2 cell, float grid) {
-  vec2 p0 = cell;
-  vec2 p1 = vec2(grid - 9.0 - cell.x, cell.y);
-  vec2 p2 = vec2(cell.x, grid - 9.0 - cell.y);
-  float f = 0.0;
-  for (int i = 0; i < 3; i++) {
-    vec2 p = i == 0 ? p0 : (i == 1 ? p1 : p2);
-    float outer = step(0.0, p.x) * step(0.0, p.y) * step(p.x, 9.0) * step(p.y, 9.0);
-    float middle = step(2.0, p.x) * step(2.0, p.y) * step(p.x, 7.0) * step(p.y, 7.0);
-    float inner = step(4.0, p.x) * step(4.0, p.y) * step(p.x, 5.0) * step(p.y, 5.0);
-    f = max(f, outer - middle + inner);
-  }
-  return clamp(f, 0.0, 1.0);
-}
-
 void main() {
   vec2 frag = gl_FragCoord.xy;
   float shortSide = min(uResolution.x, uResolution.y);
@@ -99,10 +85,7 @@ void main() {
     acc = mod(acc + micro + step(0.91, n), 2.0);
   }
 
-  float finderMask = finder(cell, grid);
   vec3 color = palette(acc * 0.24 + h * 0.31 + h2 * 0.19 + uTime * 0.17);
-  color = mix(color, vec3(0.0), finderMask);
-  color = mix(color, vec3(1.0), finderMask * step(0.42, fract(cell.x * 0.5 + cell.y * 0.5)));
 
   float border = step(local.x, 0.08) + step(local.y, 0.08);
   color = mix(color, vec3(1.0) - color, clamp(border, 0.0, 1.0) * 0.35);
@@ -231,8 +214,9 @@ function resizeCanvas() {
   canvas.style.height = `${state.renderHeight}%`;
   const rect = canvas.getBoundingClientRect();
   const ratio = Math.min(window.devicePixelRatio || 1, state.pixelRatio);
-  const width = Math.max(1, Math.floor(rect.width * ratio));
-  const height = Math.max(1, Math.floor(rect.height * ratio));
+  const internalScale = Math.max(0.1, state.internalScale / 100);
+  const width = Math.max(1, Math.floor(rect.width * ratio * internalScale));
+  const height = Math.max(1, Math.floor(rect.height * ratio * internalScale));
   if (canvas.width !== width || canvas.height !== height) {
     canvas.width = width;
     canvas.height = height;
@@ -270,8 +254,8 @@ function render(now) {
     const text = `frame ${frame}
 fps ${fps.toFixed(1)} / target ${state.targetFps}
 canvas ${canvas.width} x ${canvas.height}
-area ${state.renderWidth}% x ${state.renderHeight}%
-grid ${state.gridCells} complexity ${state.complexity}`;
+area ${state.renderWidth}% x ${state.renderHeight}% scale ${state.internalScale}%
+grid ${state.gridCells} motion ${state.motion}`;
     hud.textContent = text;
     statusEl.textContent = text;
   }
@@ -285,15 +269,37 @@ function updateFullscreenState() {
 }
 
 fullscreenButton.addEventListener("click", async () => {
+  await toggleFullscreen();
+});
+
+document.addEventListener("fullscreenchange", updateFullscreenState);
+document.addEventListener("keydown", async (event) => {
+  const target = event.target;
+  const isTyping = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement;
+  if (isTyping) {
+    return;
+  }
+  const key = event.key.toLowerCase();
+  if (key === "f" || event.key === "F10") {
+    event.preventDefault();
+    await toggleFullscreen();
+  }
+  if (key === "escape" || key === "q") {
+    if (document.fullscreenElement) {
+      event.preventDefault();
+      await document.exitFullscreen();
+    }
+  }
+});
+window.addEventListener("resize", resizeCanvas);
+
+async function toggleFullscreen() {
   if (document.fullscreenElement === stage) {
     await document.exitFullscreen();
   } else {
     await stage.requestFullscreen({ navigationUI: "hide" });
   }
-});
-
-document.addEventListener("fullscreenchange", updateFullscreenState);
-window.addEventListener("resize", resizeCanvas);
+}
 
 document.getElementById("showHud").checked = state.showHud;
 document.getElementById("showHud").addEventListener("change", (event) => {
@@ -313,6 +319,7 @@ try {
   initControl("pixelRatio");
   initControl("renderWidth");
   initControl("renderHeight");
+  initControl("internalScale");
   initControl("paletteShift");
   setupWebGL();
   resizeCanvas();
