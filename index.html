@@ -19,47 +19,52 @@
 
         <section class="control">
           <div class="control-head">
-            <label for="gridCells"><span data-i18n="gridCellsLabel">网格密度</span></label>
-            <input id="gridCellsValue" class="value-input" inputmode="numeric">
-          </div>
-          <input id="gridCells" type="range" min="24" max="520" step="1">
-          <p data-i18n="gridCellsDesc">短边方向上的网格数量。默认 137 是你测出的高码率组合。</p>
-        </section>
-
-        <section class="control">
-          <div class="control-head">
             <label for="targetFps"><span data-i18n="targetFpsLabel">目标帧率</span></label>
             <input id="targetFpsValue" class="value-input" inputmode="numeric">
           </div>
           <input id="targetFps" type="range" min="1" max="500" step="1">
-          <p data-i18n="targetFpsDesc">请求的渲染节奏。浏览器实际呈现仍受显示器、合成器和系统限制。</p>
+          <p data-i18n="targetFpsDesc">请求的渲染节奏，默认 200。浏览器实际呈现仍受显示器、合成器和系统限制。</p>
+        </section>
+
+        <section class="control">
+          <div class="control-head linked-head">
+            <label for="symbolColumns"><span data-i18n="symbolColumnsLabel">符号列数</span></label>
+            <label class="link-toggle" title="Link rows and columns">
+              <input id="symbolGridLinked" type="checkbox">
+              <span aria-hidden="true">↔</span>
+              <span data-i18n="symbolGridLinkLabel">联动行列</span>
+            </label>
+            <input id="symbolColumnsValue" class="value-input" inputmode="numeric">
+          </div>
+          <input id="symbolColumns" type="range" min="16" max="128" step="1">
+          <p data-i18n="symbolColumnsDesc">图案宽度，以 symbol 为单位。默认 64。滑块范围 16-128，输入框可设置更大值。</p>
         </section>
 
         <section class="control">
           <div class="control-head">
-            <label for="motion"><span data-i18n="motionLabel">运动强度</span></label>
-            <input id="motionValue" class="value-input" inputmode="numeric">
+            <label for="symbolRows"><span data-i18n="symbolRowsLabel">符号行数</span></label>
+            <input id="symbolRowsValue" class="value-input" inputmode="numeric">
           </div>
-          <input id="motion" type="range" min="1" max="20" step="1">
-          <p data-i18n="motionDesc">帧与帧之间变化的强度。默认 20 可以最大化画面变化。</p>
+          <input id="symbolRows" type="range" min="16" max="128" step="1">
+          <p data-i18n="symbolRowsDesc">图案高度，以 symbol 为单位。默认 64。默认与列数联动。</p>
+        </section>
+
+        <section class="control important-control">
+          <div class="control-head">
+            <label for="shapeBits"><span data-i18n="shapeBitsLabel">形状位数</span></label>
+            <input id="shapeBitsValue" class="value-input" inputmode="numeric">
+          </div>
+          <input id="shapeBits" type="range" min="0" max="4" step="1">
+          <p data-i18n="shapeBitsDesc">形状数量为 2^n，强烈影响码率。默认 n=4，即 16 种形状。</p>
         </section>
 
         <section class="control">
           <div class="control-head">
-            <label for="renderWidth"><span data-i18n="renderWidthLabel">渲染宽度 %</span></label>
-            <input id="renderWidthValue" class="value-input" inputmode="numeric">
+            <label for="colorBits"><span data-i18n="colorBitsLabel">颜色位数 k</span></label>
+            <input id="colorBitsValue" class="value-input" inputmode="numeric">
           </div>
-          <input id="renderWidth" type="range" min="10" max="100" step="1">
-          <p data-i18n="renderWidthDesc">Canvas 宽度占可用区域的百分比。默认 30 是你测出的 165 Hz 设置。</p>
-        </section>
-
-        <section class="control">
-          <div class="control-head">
-            <label for="renderHeight"><span data-i18n="renderHeightLabel">渲染高度 %</span></label>
-            <input id="renderHeightValue" class="value-input" inputmode="numeric">
-          </div>
-          <input id="renderHeight" type="range" min="10" max="100" step="1">
-          <p data-i18n="renderHeightDesc">Canvas 高度占可用区域的百分比。默认 50 是你测出的 165 Hz 设置。</p>
+          <input id="colorBits" type="range" min="0" max="8" step="1">
+          <p data-i18n="colorBitsDesc">颜色类型数量为 2^k。k=0 表示 1 种颜色，默认 k=2。</p>
         </section>
 
         <details class="advanced">
@@ -67,29 +72,20 @@
 
           <section class="control">
             <div class="control-head">
-              <label for="complexity"><span data-i18n="complexityLabel">复杂度</span></label>
-              <input id="complexityValue" class="value-input" inputmode="numeric">
+              <label for="tilePixels"><span data-i18n="tilePixelsLabel">Tile 像素大小</span></label>
+              <input id="tilePixelsValue" class="value-input" inputmode="numeric">
             </div>
-            <input id="complexity" type="range" min="1" max="10" step="1">
-            <p data-i18n="complexityDesc">每个像素上的着色器噪声层数。默认 1 可把 GPU 成本压低。</p>
+            <input id="tilePixels" type="range" min="0" max="16" step="1">
+            <p data-i18n="tilePixelsDesc">8x8 symbol 内部每个 tile 的像素边长。默认 1；0 表示按屏幕高度 50% 自动计算。</p>
           </section>
 
           <section class="control">
             <div class="control-head">
-              <label for="pixelRatio"><span data-i18n="pixelRatioLabel">像素比上限</span></label>
-              <input id="pixelRatioValue" class="value-input" inputmode="decimal">
+              <label for="motion"><span data-i18n="motionLabel">运动强度</span></label>
+              <input id="motionValue" class="value-input" inputmode="numeric">
             </div>
-            <input id="pixelRatio" type="range" min="1" max="3" step="0.25">
-            <p data-i18n="pixelRatioDesc">限制高 DPI 下的渲染分辨率。默认 1 可以避免 2 带来的明显掉帧。</p>
-          </section>
-
-          <section class="control">
-            <div class="control-head">
-              <label for="internalScale"><span data-i18n="internalScaleLabel">内部缩放 %</span></label>
-              <input id="internalScaleValue" class="value-input" inputmode="numeric">
-            </div>
-            <input id="internalScale" type="range" min="25" max="100" step="1">
-            <p data-i18n="internalScaleDesc">Canvas 内部实际渲染分辨率。降低它可以让更大的显示区域更省性能。</p>
+            <input id="motion" type="range" min="1" max="20" step="1">
+            <p data-i18n="motionDesc">帧与帧之间变化的强度。默认 10。</p>
           </section>
 
           <section class="control">
@@ -105,10 +101,11 @@
         <div class="toggles">
           <label><input id="showHud" type="checkbox"> <span data-i18n="showHudLabel">显示 HUD</span></label>
           <label><input id="vSyncPace" type="checkbox"> <span data-i18n="vSyncPaceLabel">按目标帧率限速</span></label>
+          <label><input id="paused" type="checkbox"> <span data-i18n="pausedLabel">暂停图案变化</span></label>
         </div>
 
         <button id="fullscreenButton" type="button" data-i18n="fullscreenButton">全屏压力模式</button>
-        <p class="shortcut-help" data-i18n="shortcutHelp">快捷键：F10 / F 进入全屏，Esc / Q 退出全屏。</p>
+        <p class="shortcut-help" data-i18n="shortcutHelp">快捷键：空格暂停/继续，F10 / F 进入全屏，Esc / Q 退出全屏。</p>
         <div class="status" id="status" data-i18n="statusInitializing">正在初始化 WebGL...</div>
       </aside>
 

@@ -1,87 +1,90 @@
 "use strict";
 
+const SYMBOL_TILE_DIM = 8;
+
 const DEFAULTS = {
-  gridCells: 137,
-  targetFps: 165,
-  complexity: 1,
-  motion: 20,
-  pixelRatio: 1,
-  renderWidth: 30,
-  renderHeight: 50,
-  internalScale: 100,
+  symbolColumns: 64,
+  symbolRows: 64,
+  colorBits: 2,
+  shapeBits: 4,
+  tilePixels: 1,
+  targetFps: 200,
+  motion: 10,
   paletteShift: 0,
   showHud: true,
-  vSyncPace: false,
+  vSyncPace: true,
+  paused: false,
+  symbolGridLinked: true,
 };
 
 const LOCALES = {
   zh: {
     htmlLang: "zh-CN",
     appTitle: "Streaming Stress",
-    gridCellsLabel: "网格密度",
-    gridCellsDesc: "短边方向上的网格数量。默认 137 是你测出的高码率组合。",
+    symbolColumnsLabel: "符号列数",
+    symbolColumnsDesc: "图案宽度，以 symbol 为单位。默认 64。滑块范围 16-128，输入框可设置更大值。",
+    symbolRowsLabel: "符号行数",
+    symbolRowsDesc: "图案高度，以 symbol 为单位。默认 64。默认与列数联动。",
+    symbolGridLinkLabel: "联动行列",
+    colorBitsLabel: "颜色位数 k",
+    colorBitsDesc: "颜色类型数量为 2^k。k=0 表示 1 种颜色，默认 k=2。",
+    shapeBitsLabel: "形状位数",
+    shapeBitsDesc: "形状数量为 2^n，强烈影响码率。默认 n=4，即 16 种形状。",
+    tilePixelsLabel: "Tile 像素大小",
+    tilePixelsDesc: "8x8 symbol 内部每个 tile 的像素边长。默认 1；0 表示按屏幕高度 50% 自动计算。",
     targetFpsLabel: "目标帧率",
-    targetFpsDesc: "请求的渲染节奏。浏览器实际呈现仍受显示器、合成器和系统限制。",
+    targetFpsDesc: "请求的渲染节奏，默认 200。浏览器实际呈现仍受显示器、合成器和系统限制。",
     motionLabel: "运动强度",
-    motionDesc: "帧与帧之间变化的强度。默认 20 可以最大化画面变化。",
-    renderWidthLabel: "渲染宽度 %",
-    renderWidthDesc: "Canvas 宽度占可用区域的百分比。默认 30 是你测出的 165 Hz 设置。",
-    renderHeightLabel: "渲染高度 %",
-    renderHeightDesc: "Canvas 高度占可用区域的百分比。默认 50 是你测出的 165 Hz 设置。",
+    motionDesc: "帧与帧之间变化的强度。默认 10。",
     advancedSummary: "高级选项",
-    complexityLabel: "复杂度",
-    complexityDesc: "每个像素上的着色器噪声层数。默认 1 可把 GPU 成本压低。",
-    pixelRatioLabel: "像素比上限",
-    pixelRatioDesc: "限制高 DPI 下的渲染分辨率。默认 1 可以避免 2 带来的明显掉帧。",
-    internalScaleLabel: "内部缩放 %",
-    internalScaleDesc: "Canvas 内部实际渲染分辨率。降低它可以让更大的显示区域更省性能。",
     paletteShiftLabel: "色相偏移",
     paletteShiftDesc: "颜色相位偏移。对性能影响很小。",
     showHudLabel: "显示 HUD",
     vSyncPaceLabel: "按目标帧率限速",
+    pausedLabel: "暂停图案变化",
     fullscreenButtonEnter: "全屏压力模式",
     fullscreenButtonExit: "退出全屏",
-    shortcutHelp: "快捷键：F10 / F 进入全屏，Esc / Q 退出全屏。",
+    shortcutHelp: "快捷键：空格暂停/继续，F10 / F 进入全屏，Esc / Q 退出全屏。",
     statusInitializing: "正在初始化 WebGL...",
     statusReady: "WebGL 已就绪",
     statusErrorPrefix: "错误：",
     statusWebgl2Unavailable: "当前浏览器不支持 WebGL2。",
-    hud: ({ frame, fps, targetFps, canvasWidth, canvasHeight, renderWidth, renderHeight, internalScale, gridCells, motion }) =>
-      `帧 ${frame}\nFPS ${fps.toFixed(1)} / 目标 ${targetFps}\n画布 ${canvasWidth} x ${canvasHeight}\n区域 ${renderWidth}% x ${renderHeight}% 缩放 ${internalScale}%\n网格 ${gridCells} 运动 ${motion}`,
+    hud: ({ frame, fps, targetFps, canvasWidth, canvasHeight, symbolColumns, symbolRows, tilePixels, colorBits, colorCount, shapeBits, shapeCount, bitsPerSymbol, dataPerFrameText, estimatedBitrateText, motion, paused }) =>
+      `状态：${paused ? "暂停" : "运行"} | 帧 ${frame}\n帧率：${fps.toFixed(1)} / ${targetFps} FPS | 估计码率：${estimatedBitrateText}\n数据：${dataPerFrameText}/帧 | ${bitsPerSymbol} bit/symbol\n网格：${symbolColumns} x ${symbolRows} symbols | 画布：${canvasWidth} x ${canvasHeight}px\n编码：颜色 ${colorCount} (k=${colorBits}) | 形状 ${shapeCount} (n=${shapeBits})\n渲染：tile ${tilePixels}px | 运动 ${motion}`,
   },
   en: {
     htmlLang: "en",
     appTitle: "Streaming Stress",
-    gridCellsLabel: "Grid cells",
-    gridCellsDesc: "Cell count along the shorter side. The default 137 matches your high-bitrate preset.",
+    symbolColumnsLabel: "Symbol columns",
+    symbolColumnsDesc: "Pattern width in symbols. Default 64. Slider range is 16-128; manual input can exceed it.",
+    symbolRowsLabel: "Symbol rows",
+    symbolRowsDesc: "Pattern height in symbols. Default 64. Linked to columns by default.",
+    symbolGridLinkLabel: "Link rows/columns",
+    colorBitsLabel: "Color bits k",
+    colorBitsDesc: "Number of color types is 2^k. k=0 means one color, default k=2.",
+    shapeBitsLabel: "Shape bits",
+    shapeBitsDesc: "Shape count is 2^n and strongly affects bitrate. Default n=4, meaning 16 shapes.",
+    tilePixelsLabel: "Tile pixels",
+    tilePixelsDesc: "Pixel size of each tile inside an 8x8 symbol. Default 1; 0 auto-calculates from 50% screen height.",
     targetFpsLabel: "Target FPS",
-    targetFpsDesc: "Requested pacing. Actual presentation is still bounded by the display, compositor, and OS.",
+    targetFpsDesc: "Requested pacing, default 200. Actual presentation is still bounded by the display, compositor, and OS.",
     motionLabel: "Motion",
-    motionDesc: "Frame-to-frame change intensity. The default 20 maximizes visual change.",
-    renderWidthLabel: "Render width %",
-    renderWidthDesc: "Canvas width as a percentage of the available area. Default 30 matches your 165 Hz test.",
-    renderHeightLabel: "Render height %",
-    renderHeightDesc: "Canvas height as a percentage of the available area. Default 50 matches your 165 Hz test.",
+    motionDesc: "Frame-to-frame change intensity. Default 10.",
     advancedSummary: "Advanced",
-    complexityLabel: "Complexity",
-    complexityDesc: "Noise layers per pixel. Default 1 keeps GPU cost low.",
-    pixelRatioLabel: "Pixel ratio cap",
-    pixelRatioDesc: "Caps high-DPI render resolution. Default 1 avoids the FPS drop seen at 2.",
-    internalScaleLabel: "Internal scale %",
-    internalScaleDesc: "Actual render resolution inside the canvas. Lower values keep larger areas cheaper.",
     paletteShiftLabel: "Palette shift",
     paletteShiftDesc: "Color phase offset. Low performance impact.",
     showHudLabel: "Show HUD",
     vSyncPaceLabel: "Respect target FPS",
+    pausedLabel: "Pause pattern",
     fullscreenButtonEnter: "Fullscreen stress mode",
     fullscreenButtonExit: "Exit fullscreen",
-    shortcutHelp: "Shortcuts: F10 / F enter fullscreen, Esc / Q exit fullscreen.",
+    shortcutHelp: "Shortcuts: Space pause/resume, F10 / F enter fullscreen, Esc / Q exit fullscreen.",
     statusInitializing: "Initializing WebGL...",
     statusReady: "WebGL ready",
     statusErrorPrefix: "Error: ",
     statusWebgl2Unavailable: "WebGL2 is not available in this browser.",
-    hud: ({ frame, fps, targetFps, canvasWidth, canvasHeight, renderWidth, renderHeight, internalScale, gridCells, motion }) =>
-      `frame ${frame}\nFPS ${fps.toFixed(1)} / target ${targetFps}\ncanvas ${canvasWidth} x ${canvasHeight}\narea ${renderWidth}% x ${renderHeight}% scale ${internalScale}%\ngrid ${gridCells} motion ${motion}`,
+    hud: ({ frame, fps, targetFps, canvasWidth, canvasHeight, symbolColumns, symbolRows, tilePixels, colorBits, colorCount, shapeBits, shapeCount, bitsPerSymbol, dataPerFrameText, estimatedBitrateText, motion, paused }) =>
+      `Status: ${paused ? "paused" : "running"} | frame ${frame}\nFPS: ${fps.toFixed(1)} / ${targetFps} | Estimated bitrate: ${estimatedBitrateText}\nData: ${dataPerFrameText}/frame | ${bitsPerSymbol} bit/symbol\nGrid: ${symbolColumns} x ${symbolRows} symbols | Canvas: ${canvasWidth} x ${canvasHeight}px\nEncoding: colors ${colorCount} (k=${colorBits}) | shapes ${shapeCount} (n=${shapeBits})\nRender: tile ${tilePixels}px | motion ${motion}`,
   },
 };
 
@@ -97,15 +100,17 @@ void main() {
 
 const fragmentSource = `#version 300 es
 precision highp float;
+precision highp int;
 
 in vec2 vUv;
 out vec4 outColor;
 
 uniform vec2 uResolution;
-uniform float uTime;
 uniform float uFrame;
-uniform float uGridCells;
-uniform float uComplexity;
+uniform ivec2 uSymbolGrid;
+uniform int uColorBits;
+uniform int uShapeBits;
+uniform int uTilePixels;
 uniform float uMotion;
 uniform float uPaletteShift;
 
@@ -124,42 +129,66 @@ vec3 palette(float t) {
   return a + b * cos(6.2831853 * (c * t + d));
 }
 
+bool shapeOn(int shape, ivec2 p) {
+  int x = p.x;
+  int y = p.y;
+  if (shape == 0) return x >= 2 && x <= 5 && y >= 2 && y <= 5;
+  if (shape == 1) return x == 3 || x == 4;
+  if (shape == 2) return y == 3 || y == 4;
+  if (shape == 3) return x == y || x == y + 1 || x + 1 == y;
+  if (shape == 4) return x + y == 7 || x + y == 6 || x + y == 8;
+  if (shape == 5) return x == 3 || x == 4 || y == 3 || y == 4;
+  if (shape == 6) return abs(x - y) <= 1 || abs(x + y - 7) <= 1;
+  if (shape == 7) return (x >= 1 && x <= 6 && (y == 1 || y == 6)) || (y >= 1 && y <= 6 && (x == 1 || x == 6));
+  if (shape == 8) return (x + y) % 2 == 0;
+  if (shape == 9) return x <= y;
+  if (shape == 10) return x + y >= 7;
+  if (shape == 11) return (x <= 2 && y <= 2) || (x >= 5 && y >= 5) || (x >= 3 && x <= 4 && y >= 3 && y <= 4);
+  if (shape == 12) return x <= 1 || x >= 6 || (y >= 3 && y <= 4);
+  if (shape == 13) return y <= 1 || y >= 6 || (x >= 3 && x <= 4);
+  if (shape == 14) return abs(x - 3) + abs(y - 3) <= 3;
+  return (x <= 1 && y >= 5) || (x >= 5 && y <= 1) || (x >= 3 && x <= 4) || (y >= 3 && y <= 4);
+}
+
+vec3 symbolColor(int colorIndex, int colorCount) {
+  float t = float(colorIndex) / max(1.0, float(colorCount - 1));
+  return palette(t);
+}
+
 void main() {
-  vec2 frag = gl_FragCoord.xy;
-  float shortSide = min(uResolution.x, uResolution.y);
-  float grid = max(1.0, uGridCells);
-  vec2 gridPos = frag / shortSide * grid;
-  vec2 cell = floor(gridPos);
-  vec2 local = fract(gridPos);
-  float tick = floor(uFrame * max(1.0, uMotion));
+  ivec2 pixel = ivec2(gl_FragCoord.xy);
+  int tilePixels = max(1, uTilePixels);
+  ivec2 tileCoord = pixel / tilePixels;
+  ivec2 symbolCoord = tileCoord / 8;
+  ivec2 localTile = tileCoord - symbolCoord * 8;
 
-  float h = hash12(cell + tick * vec2(0.071, 0.113));
-  float h2 = hash12(cell.yx * 1.73 + tick * vec2(0.137, 0.067));
-  float shapeA = step(local.x, h);
-  float shapeB = step(local.y, h2);
-  float diagonal = step(abs(local.x - local.y), 0.18 + 0.24 * h2);
-  float ring = step(0.18 + 0.22 * h, length(local - 0.5));
-  float bits = mod(floor(h * 31.0) + floor(h2 * 47.0) + floor(cell.x) + floor(cell.y) + tick, 2.0);
-  float signal = mix(shapeA, shapeB, bits);
-  signal = mix(signal, diagonal, step(0.66, h));
-  signal = mix(signal, ring, step(0.74, h2));
-
-  float acc = signal;
-  for (int i = 0; i < 10; i++) {
-    if (float(i) >= uComplexity) {
-      break;
-    }
-    float fi = float(i) + 1.0;
-    vec2 p = frag * (0.011 * fi + 0.003) + vec2(tick * (0.13 + fi * 0.017), tick * (0.09 + fi * 0.019));
-    float n = hash12(floor(p) + fi * 19.19);
-    float micro = step(fract(p.x + n), fract(p.y * 1.37 + n * 0.71));
-    acc = mod(acc + micro + step(0.91, n), 2.0);
+  if (symbolCoord.x < 0 || symbolCoord.y < 0 || symbolCoord.x >= uSymbolGrid.x || symbolCoord.y >= uSymbolGrid.y) {
+    outColor = vec4(0.0, 0.0, 0.0, 1.0);
+    return;
   }
 
-  vec3 color = palette(acc * 0.24 + h * 0.31 + h2 * 0.19 + uTime * 0.17);
+  float tick = floor(uFrame * max(1.0, uMotion));
+  float h = hash12(vec2(symbolCoord) + tick * vec2(0.071, 0.113));
+  float h2 = hash12(vec2(symbolCoord.yx) * 1.73 + tick * vec2(0.137, 0.067));
+  int colorBits = clamp(uColorBits, 0, 8);
+  int colorCount = 1 << colorBits;
+  int shapeBits = clamp(uShapeBits, 0, 4);
+  int shapeCount = 1 << shapeBits;
+  int colorIndex = int(floor(h * float(colorCount))) % colorCount;
+  int shapeIndex = int(floor(h2 * float(shapeCount))) % shapeCount;
+  bool on = shapeOn(shapeIndex, localTile);
 
-  float border = step(local.x, 0.08) + step(local.y, 0.08);
-  color = mix(color, vec3(1.0) - color, clamp(border, 0.0, 1.0) * 0.35);
+  vec3 fg = symbolColor(colorIndex, colorCount);
+  vec3 bg = vec3(0.015, 0.016, 0.020);
+  vec3 off = mix(bg, vec3(1.0) - fg, 0.16);
+  vec3 color = on ? fg : off;
+
+  ivec2 pixelInTile = pixel - tileCoord * tilePixels;
+  bool tileEdge = tilePixels >= 3 && (pixelInTile.x == 0 || pixelInTile.y == 0);
+  if (tileEdge) {
+    color *= 0.72;
+  }
+
   outColor = vec4(color, 1.0);
 }
 `;
@@ -214,7 +243,9 @@ function applyLanguage(lang) {
   fullscreenButton.textContent = document.fullscreenElement === stage
     ? current.fullscreenButtonExit
     : current.fullscreenButtonEnter;
-  if (statusEl.dataset.mode === "static") {
+  if (statusEl.dataset.mode === "dynamic") {
+    updateHudText();
+  } else if (statusEl.dataset.mode === "static") {
     const statusKey = statusEl.dataset.statusKey || "statusReady";
     const statusKind = statusEl.dataset.statusKind || "text";
     if (statusKind === "error") {
@@ -251,7 +282,13 @@ function initControl(id, parser = Number) {
   slider.value = state[id];
   input.value = state[id];
 
-  const apply = (raw) => {
+  const sync = (value) => {
+    state[id] = value;
+    slider.value = value;
+    input.value = value;
+  };
+
+  const apply = (raw, clampToSlider = true) => {
     const parsed = parser(raw);
     if (!Number.isFinite(parsed)) {
       input.value = state[id];
@@ -260,11 +297,14 @@ function initControl(id, parser = Number) {
     const min = Number(slider.min);
     const max = Number(slider.max);
     const step = Number(slider.step) || 1;
-    const clamped = Math.min(max, Math.max(min, parsed));
+    const allowManualOutOfRange = !clampToSlider && (id === "symbolColumns" || id === "symbolRows");
+    const clamped = allowManualOutOfRange ? Math.max(1, parsed) : Math.min(max, Math.max(min, parsed));
     const rounded = Math.round(clamped / step) * step;
-    state[id] = Number(rounded.toFixed(3));
-    slider.value = state[id];
-    input.value = state[id];
+    const value = Number(rounded.toFixed(3));
+    sync(value);
+    if (state.symbolGridLinked && (id === "symbolColumns" || id === "symbolRows")) {
+      syncControl(id === "symbolColumns" ? "symbolRows" : "symbolColumns", value);
+    }
     resizeCanvas();
   };
 
@@ -274,7 +314,109 @@ function initControl(id, parser = Number) {
       input.blur();
     }
   });
-  input.addEventListener("blur", () => apply(input.value));
+  input.addEventListener("blur", () => apply(input.value, false));
+}
+
+function syncControl(id, value) {
+  const slider = document.getElementById(id);
+  const input = document.getElementById(`${id}Value`);
+  state[id] = value;
+  slider.value = value;
+  input.value = value;
+}
+
+function getResolvedTilePixels() {
+  if (state.tilePixels > 0) {
+    return Math.max(1, Math.round(state.tilePixels));
+  }
+  const ratio = window.devicePixelRatio || 1;
+  const targetHeight = window.innerHeight * 0.5 * ratio;
+  return Math.max(1, Math.floor(targetHeight / (Math.max(1, state.symbolRows) * SYMBOL_TILE_DIM)));
+}
+
+function getResolvedColorBits() {
+  return Math.max(0, Math.min(8, Math.round(state.colorBits)));
+}
+
+function getResolvedColorCount() {
+  return 2 ** getResolvedColorBits();
+}
+
+function getResolvedShapeBits() {
+  return Math.max(0, Math.min(4, Math.round(state.shapeBits)));
+}
+
+function getResolvedShapeCount() {
+  return 2 ** getResolvedShapeBits();
+}
+
+function getBitsPerSymbol() {
+  return getResolvedColorBits() + getResolvedShapeBits();
+}
+
+function getDataPerFrameBits() {
+  return Math.round(state.symbolColumns) * Math.round(state.symbolRows) * getBitsPerSymbol();
+}
+
+function getEstimatedBitrateBitsPerSecond() {
+  return getDataPerFrameBits() * fps;
+}
+
+function formatBits(bits) {
+  if (bits >= 1_000_000_000) {
+    return `${(bits / 1_000_000_000).toFixed(2)} Gb`;
+  }
+  if (bits >= 1_000_000) {
+    return `${(bits / 1_000_000).toFixed(2)} Mb`;
+  }
+  if (bits >= 1_000) {
+    return `${(bits / 1_000).toFixed(2)} Kb`;
+  }
+  return `${Math.round(bits)} b`;
+}
+
+function formatBitrate(bitsPerSecond) {
+  if (bitsPerSecond >= 1_000_000_000) {
+    return `${(bitsPerSecond / 1_000_000_000).toFixed(2)} Gbps`;
+  }
+  if (bitsPerSecond >= 1_000_000) {
+    return `${(bitsPerSecond / 1_000_000).toFixed(2)} Mbps`;
+  }
+  if (bitsPerSecond >= 1_000) {
+    return `${(bitsPerSecond / 1_000).toFixed(2)} Kbps`;
+  }
+  return `${Math.round(bitsPerSecond)} bps`;
+}
+
+function getHudData() {
+  const tilePixels = getResolvedTilePixels();
+  const dataPerFrameBits = getDataPerFrameBits();
+  const estimatedBitrate = getEstimatedBitrateBitsPerSecond();
+  return {
+    frame,
+    fps,
+    targetFps: Math.round(state.targetFps),
+    canvasWidth: canvas.width,
+    canvasHeight: canvas.height,
+    symbolColumns: Math.round(state.symbolColumns),
+    symbolRows: Math.round(state.symbolRows),
+    tilePixels,
+    colorBits: getResolvedColorBits(),
+    colorCount: getResolvedColorCount(),
+    shapeBits: getResolvedShapeBits(),
+    shapeCount: getResolvedShapeCount(),
+    bitsPerSymbol: getBitsPerSymbol(),
+    dataPerFrameText: formatBits(dataPerFrameBits),
+    estimatedBitrateText: formatBitrate(estimatedBitrate),
+    motion: Math.round(state.motion),
+    paused: state.paused,
+  };
+}
+
+function updateHudText() {
+  const text = translate("hud")(getHudData());
+  hud.textContent = text;
+  statusEl.textContent = text;
 }
 
 function compileShader(type, source) {
@@ -319,10 +461,11 @@ function setupWebGL() {
   gl.useProgram(program);
   uniforms = {
     resolution: gl.getUniformLocation(program, "uResolution"),
-    time: gl.getUniformLocation(program, "uTime"),
     frame: gl.getUniformLocation(program, "uFrame"),
-    gridCells: gl.getUniformLocation(program, "uGridCells"),
-    complexity: gl.getUniformLocation(program, "uComplexity"),
+    symbolGrid: gl.getUniformLocation(program, "uSymbolGrid"),
+    colorBits: gl.getUniformLocation(program, "uColorBits"),
+    shapeBits: gl.getUniformLocation(program, "uShapeBits"),
+    tilePixels: gl.getUniformLocation(program, "uTilePixels"),
     motion: gl.getUniformLocation(program, "uMotion"),
     paletteShift: gl.getUniformLocation(program, "uPaletteShift"),
   };
@@ -345,13 +488,11 @@ function resizeCanvas() {
   if (!gl) {
     return;
   }
-  canvas.style.width = `${state.renderWidth}%`;
-  canvas.style.height = `${state.renderHeight}%`;
-  const rect = canvas.getBoundingClientRect();
-  const ratio = Math.min(window.devicePixelRatio || 1, state.pixelRatio);
-  const internalScale = Math.max(0.1, state.internalScale / 100);
-  const width = Math.max(1, Math.floor(rect.width * ratio * internalScale));
-  const height = Math.max(1, Math.floor(rect.height * ratio * internalScale));
+  const tilePixels = getResolvedTilePixels();
+  const width = Math.max(1, Math.round(state.symbolColumns) * SYMBOL_TILE_DIM * tilePixels);
+  const height = Math.max(1, Math.round(state.symbolRows) * SYMBOL_TILE_DIM * tilePixels);
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
   if (canvas.width !== width || canvas.height !== height) {
     canvas.width = width;
     canvas.height = height;
@@ -368,42 +509,33 @@ function render(now) {
   nextAllowedFrame = now + targetInterval;
 
   resizeCanvas();
-  frame += 1;
+  if (!state.paused) {
+    frame += 1;
+  }
   const dt = now - lastFrameTime;
   lastFrameTime = now;
   const instant = dt > 0 ? 1000 / dt : 0;
   fps = fps === 0 ? instant : fps * 0.92 + instant * 0.08;
+  const tilePixels = getResolvedTilePixels();
 
   gl.useProgram(program);
   gl.bindVertexArray(vao);
   gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
-  gl.uniform1f(uniforms.time, now * 0.001);
   gl.uniform1f(uniforms.frame, frame);
-  gl.uniform1f(uniforms.gridCells, state.gridCells);
-  gl.uniform1f(uniforms.complexity, state.complexity);
+  gl.uniform2i(uniforms.symbolGrid, Math.round(state.symbolColumns), Math.round(state.symbolRows));
+  gl.uniform1i(uniforms.colorBits, getResolvedColorBits());
+  gl.uniform1i(uniforms.shapeBits, getResolvedShapeBits());
+  gl.uniform1i(uniforms.tilePixels, tilePixels);
   gl.uniform1f(uniforms.motion, state.motion);
   gl.uniform1f(uniforms.paletteShift, state.paletteShift);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 
   if (state.showHud && frame % 10 === 0) {
-    const text = translate("hud")({
-      frame,
-      fps,
-      targetFps: Math.round(state.targetFps),
-      canvasWidth: canvas.width,
-      canvasHeight: canvas.height,
-      renderWidth: Math.round(state.renderWidth),
-      renderHeight: Math.round(state.renderHeight),
-      internalScale: Math.round(state.internalScale),
-      gridCells: Math.round(state.gridCells),
-      motion: Math.round(state.motion),
-    });
-    hud.textContent = text;
-    hud.style.display = state.showHud ? "block" : "none";
+    updateHudText();
+    hud.style.display = "block";
     statusEl.dataset.mode = "dynamic";
     statusEl.dataset.statusKey = "";
     statusEl.dataset.statusKind = "";
-    statusEl.textContent = text;
   }
 }
 
@@ -428,6 +560,10 @@ document.addEventListener("keydown", async (event) => {
     return;
   }
   const key = event.key.toLowerCase();
+  if (key === " " || event.code === "Space") {
+    event.preventDefault();
+    togglePaused();
+  }
   if (key === "f" || event.key === "F10") {
     event.preventDefault();
     await toggleFullscreen();
@@ -449,6 +585,20 @@ async function toggleFullscreen() {
   }
 }
 
+function togglePaused() {
+  state.paused = !state.paused;
+  document.getElementById("paused").checked = state.paused;
+  updateHudText();
+}
+
+document.getElementById("symbolGridLinked").checked = state.symbolGridLinked;
+document.getElementById("symbolGridLinked").addEventListener("change", (event) => {
+  state.symbolGridLinked = event.target.checked;
+  if (state.symbolGridLinked) {
+    syncControl("symbolRows", state.symbolColumns);
+    resizeCanvas();
+  }
+});
 document.getElementById("showHud").checked = state.showHud;
 document.getElementById("showHud").addEventListener("change", (event) => {
   state.showHud = event.target.checked;
@@ -458,38 +608,26 @@ document.getElementById("vSyncPace").checked = state.vSyncPace;
 document.getElementById("vSyncPace").addEventListener("change", (event) => {
   state.vSyncPace = event.target.checked;
 });
+document.getElementById("paused").checked = state.paused;
+document.getElementById("paused").addEventListener("change", (event) => {
+  state.paused = event.target.checked;
+  updateHudText();
+});
 
 try {
   for (const button of langButtons) {
     button.addEventListener("click", () => {
       applyLanguage(button.dataset.lang || "zh");
       updateFullscreenState();
-      if (statusEl.dataset.mode === "dynamic") {
-        const text = translate("hud")({
-          frame,
-          fps,
-          targetFps: Math.round(state.targetFps),
-          canvasWidth: canvas.width,
-          canvasHeight: canvas.height,
-          renderWidth: Math.round(state.renderWidth),
-          renderHeight: Math.round(state.renderHeight),
-          internalScale: Math.round(state.internalScale),
-          gridCells: Math.round(state.gridCells),
-          motion: Math.round(state.motion),
-        });
-        hud.textContent = text;
-        statusEl.textContent = text;
-      }
     });
   }
-  initControl("gridCells");
   initControl("targetFps");
-  initControl("complexity");
+  initControl("symbolColumns");
+  initControl("symbolRows");
+  initControl("shapeBits");
+  initControl("colorBits");
+  initControl("tilePixels");
   initControl("motion");
-  initControl("pixelRatio");
-  initControl("renderWidth");
-  initControl("renderHeight");
-  initControl("internalScale");
   initControl("paletteShift");
   applyLanguage("zh");
   setupWebGL();

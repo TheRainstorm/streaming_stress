@@ -15,6 +15,16 @@ VSync、像素密度和区域大小之间的组合关系。把这些变量集中
 
 页面会在 GPU 上持续生成变化中的高复杂度图案，同时尽量降低 CPU 占用。
 
+图案结构借鉴 libcimbar 的 symbol/tile 思路，但不是兼容的编码格式：整张图由
+`宽 x 高` 个 symbol 组成，每个 symbol 是 `8 x 8` 个 tile，每个 tile 渲染为
+若干像素大小的方块。每个 symbol 由 `k` 位颜色和 `n` 位形状组成，因此：
+
+```text
+每 symbol bit 数 = k + n
+每帧数据量 = symbol 列数 * symbol 行数 * 每 symbol bit 数
+估计码率 = 每帧数据量 * 当前实测 FPS
+```
+
 ## 运行
 
 直接在现代浏览器中打开 [index.html](./index.html)。
@@ -39,38 +49,42 @@ http://localhost:8000
 
 ## 参数
 
-- `Grid cells`：网格密度，默认 `137`。
-- `Target FPS`：目标刷新率，默认 `165`。
-- `Motion`：变化速度，默认 `20`。
-- `Render width %`：渲染区域宽度占可用区域的百分比，默认 `30`。
-- `Render height %`：渲染区域高度占可用区域的百分比，默认 `50`。
-- `Show HUD`：显示状态信息。
-- `Respect target FPS`：按目标帧率限速。想冲极限时建议关闭。
+- `Target FPS`：目标刷新率，默认 `200`。
+- `Symbol columns`：图案宽度，以 symbol 为单位，默认 `64`。滑块范围 `16-128`，输入框可设置范围外的值。
+- `Symbol rows`：图案高度，以 symbol 为单位，默认 `64`。默认与列数联动。
+- `Shape bits n`：形状数量为 `2^n`，可选 1、2、4、8、16 种形状，默认 `4`；它会显著影响估计码率。
+- `Color bits k`：颜色类型数量为 `2^k`，默认 `2`，即 4 种颜色；`0` 表示 1 种颜色。
+- `Show HUD`：显示状态信息和估计码率。
+- `Respect target FPS`：按目标帧率限速，默认开启。
+- `Pause pattern`：暂停图案变化，方便调整和观察。
 
 ## 高性能默认值
 
-- `Grid cells`：`137`
-- `Target FPS`：`165`
-- `Motion`：`20`
-- `Render width %`：`30`
-- `Render height %`：`50`
+- `Symbol columns`：`64`
+- `Symbol rows`：`64`
+- `Color bits k`：`2`，即 4 种颜色
+- `Shape bits n`：`4`，即 16 种形状
+- `Tile pixels`：`1`
+- `Target FPS`：`200`
+- `Motion`：`10`
+- `Respect target FPS`：开启
 
 ## 高级选项
 
 默认隐藏在 `Advanced` 中：
 
-- `Complexity`：默认 `1`，更高会增加着色器计算。
-- `Pixel ratio cap`：默认 `1`，更高会明显增加渲染像素数。
-- `Internal scale %`：Canvas 内部实际渲染分辨率。降低它可以在更大显示区域下保住帧率，但会损失细节。
+- `Tile pixels`：默认 `1`；`0` 表示按屏幕高度 50% 自动计算。
+- `Motion`：变化速度，默认 `10`。
 - `Palette shift`：默认 `0`，对性能影响很小。
 
 ## 快捷键
 
+- `Space`：暂停或继续图案变化。
 - `F10` 或 `F`：切换全屏。
 - `Esc` 或 `Q`：退出全屏。
 
 ## 说明
 
 浏览器里的 WebGL 最终还是受 `requestAnimationFrame`、显示器刷新率、浏览器合成器和系统 VSync 影响。
-如果把显示区域继续放大，而 shader 和像素数都不降，帧率掉下去是正常的。
-想在更大面积下尽量保帧，优先降低 `Internal scale %` 和 `Pixel ratio cap`。
+如果把 symbol 行列数或 tile 像素大小继续放大，帧率掉下去是正常的。
+想在更大面积下尽量保帧，优先降低 symbol 行列数、`Tile pixels` 或 `Shape bits n`。
