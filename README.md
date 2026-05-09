@@ -1,73 +1,55 @@
 # Streaming Stress
 
-Python windowed visual stress source for testing Moonlight + Sunshine streaming.
+WebGL visual stress page for testing Moonlight + Sunshine streaming.
 
-It continuously refreshes a high-complexity QR-like image at a configurable
-target FPS. Use Sunshine/Moonlight bitrate and frame-rate settings externally,
-then use this app to generate repeatable visual complexity inside the streamed
-desktop.
-
-## Setup
-
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-If Windows does not resolve `python`, use `py` instead:
-
-```bash
-py -m venv .venv
-.venv\Scripts\activate
-py -m pip install -r requirements.txt
-```
-
-On Linux/macOS shells, activate with:
-
-```bash
-source .venv/bin/activate
-```
+The page renders a continuously changing, high-detail QR-like pattern directly
+on the GPU. It is designed to fill the encoder with changing pixels while
+keeping CPU work low.
 
 ## Run
 
-```bash
-python streaming_stress.py
-```
+Open [index.html](./index.html) in a modern browser.
 
-Or on Windows with the launcher:
+For stricter browser behavior, run a static server from this directory:
 
 ```bash
-py streaming_stress.py
+python -m http.server 8000
 ```
 
-Controls:
+Then open:
 
-- `Mode`: standard QR or complex fake QR.
-- `Image size`: rendered image size in pixels.
-- `Grid cells`: number of cells per side for the fake QR. More cells increase
-  spatial detail and encoder workload.
-- `Target FPS`: requested refresh rate.
-- `Frame pool`: number of pre-rendered frames to cycle through. Larger pools
-  reduce obvious repetition but use more memory.
-- `Pause`: freeze or resume frame updates.
-- `Fullscreen`: use the whole display for capture tests.
-- `Fast overlay`: updates the text overlay every 10 frames instead of every
-  frame. Keep this enabled when testing very high refresh rates.
+```text
+http://localhost:8000
+```
 
-The default stress preset is:
+## Modes
 
-- `Image size`: `711`
-- `Grid cells`: `144`
-- `Target FPS`: `165`
-- `Frame pool`: `5`
+- Normal mode: controls are on the left, the WebGL render surface fills the
+  remaining area on the right.
+- Fullscreen stress mode: the canvas enters browser fullscreen and the whole
+  display becomes changing pixels.
 
-This matches the measured high-bitrate combination that reached about 640 Mbps.
-Each slider has an editable number box on its right; type a value and press
-Enter, or click away from the field, to apply it.
+## Controls
 
-The app pre-renders the selected frame pool when image parameters change, then
-the hot path only switches cached Tk images. This is much faster than drawing a
-new QR image every frame and is the intended mode for 165 Hz / 365 Hz testing.
-The overlay shows frame number, timestamp, target FPS, actual FPS, and cache
-size.
+- `Grid cells`: QR-like cell density. Higher values create more spatial detail.
+- `Target FPS`: frame pacing target. Browser rendering is still capped by the
+  display, browser compositor, GPU, and OS.
+- `Complexity`: number of shader noise layers. Higher values increase GPU work
+  and visual entropy.
+- `Motion`: animation speed. Higher values make adjacent frames differ more.
+- `Pixel ratio cap`: maximum device pixel ratio used for the canvas. Higher
+  values increase real rendered pixels.
+- `Render width %`: canvas width as a percentage of the available display area.
+- `Render height %`: canvas height as a percentage of the available display
+  area.
+- `Palette shift`: color phase offset for the generated pattern.
+- `Show HUD`: overlays frame/FPS/render-size status.
+- `Respect target FPS`: caps rendering to `Target FPS`. Set `Target FPS` high,
+  such as `500`, when you want the browser to run at the display limit.
+
+For maximum FPS, keep `Respect target FPS` disabled. Browser WebGL rendering is
+presented through `requestAnimationFrame`, so it usually cannot exceed the
+active display refresh rate even when the shader is fast enough.
+
+Every numeric control has an editable value box. Type a value and press Enter,
+or click away from the field, to apply it.
