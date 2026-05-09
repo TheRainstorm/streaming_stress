@@ -24,10 +24,10 @@ except ModuleNotFoundError as exc:
 
 
 WINDOW_TITLE = "Streaming Stress"
-DEFAULT_SIZE = 720
-DEFAULT_CELLS = 96
+DEFAULT_SIZE = 711
+DEFAULT_CELLS = 144
 DEFAULT_FPS = 165
-DEFAULT_POOL = 120
+DEFAULT_POOL = 5
 MAX_TARGET_FPS = 500
 MEMORY_BUDGET_MB = 512
 PALETTE = (
@@ -82,49 +82,11 @@ class StreamingStressApp:
 
     def _build_ui(self) -> None:
         self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(1, weight=1)
+        self.root.columnconfigure(1, weight=0)
+        self.root.rowconfigure(0, weight=1)
 
-        controls = ttk.Frame(self.root, padding=(10, 8))
-        controls.grid(row=0, column=0, sticky="ew")
-        for column in (3, 6, 9, 12):
-            controls.columnconfigure(column, weight=1)
-
-        ttk.Label(controls, text="Mode").grid(row=0, column=0, padx=(0, 6))
-        mode_menu = ttk.Combobox(
-            controls,
-            textvariable=self.mode,
-            values=("Standard QR", "Complex fake QR"),
-            state="readonly",
-            width=17,
-        )
-        mode_menu.grid(row=0, column=1, padx=(0, 14), sticky="w")
-
-        self._add_slider(controls, "Image size", self.size, 256, 1600, 2, row=0, rebuild=True)
-        self._add_slider(controls, "Grid cells", self.cells, 32, 240, 5, row=0, rebuild=True)
-        self._add_slider(controls, "Target FPS", self.target_fps, 1, MAX_TARGET_FPS, 8, row=0, rebuild=False)
-        self._add_slider(controls, "Frame pool", self.frame_pool, 2, 240, 11, row=0, rebuild=True)
-
-        ttk.Checkbutton(controls, text="Pause", variable=self.paused).grid(
-            row=1, column=0, padx=(0, 12), pady=(8, 0), sticky="w"
-        )
-        ttk.Checkbutton(
-            controls,
-            text="Fullscreen",
-            variable=self.fullscreen,
-            command=self._apply_fullscreen,
-        ).grid(row=1, column=1, padx=(0, 12), pady=(8, 0), sticky="w")
-        ttk.Checkbutton(controls, text="Fast overlay", variable=self.fast_overlay).grid(
-            row=1, column=2, padx=(0, 12), pady=(8, 0), sticky="w"
-        )
-
-        self.rebuild_button = ttk.Button(controls, text="Rebuild frames", command=self._mark_dirty)
-        self.rebuild_button.grid(row=1, column=3, pady=(8, 0), sticky="w")
-
-        self.status = ttk.Label(controls, text="", anchor="e")
-        self.status.grid(row=1, column=4, columnspan=10, sticky="ew", pady=(8, 0))
-
-        canvas_frame = ttk.Frame(self.root, padding=(10, 0, 10, 10))
-        canvas_frame.grid(row=1, column=0, sticky="nsew")
+        canvas_frame = ttk.Frame(self.root, padding=(10, 10, 0, 10))
+        canvas_frame.grid(row=0, column=0, sticky="nsew")
         canvas_frame.columnconfigure(0, weight=1)
         canvas_frame.rowconfigure(0, weight=1)
 
@@ -141,6 +103,105 @@ class StreamingStressApp:
             text="",
         )
 
+        controls = ttk.Frame(self.root, width=310, padding=(12, 10))
+        controls.grid(row=0, column=1, sticky="ns")
+        controls.grid_propagate(False)
+        controls.columnconfigure(0, weight=1)
+
+        ttk.Label(controls, text="Settings", font=("Segoe UI", 12, "bold")).grid(
+            row=0, column=0, sticky="ew", pady=(0, 12)
+        )
+
+        ttk.Label(controls, text="Mode").grid(row=1, column=0, sticky="w")
+        mode_menu = ttk.Combobox(
+            controls,
+            textvariable=self.mode,
+            values=("Standard QR", "Complex fake QR"),
+            state="readonly",
+        )
+        mode_menu.grid(row=2, column=0, sticky="ew", pady=(2, 2))
+        ttk.Label(
+            controls,
+            text="Standard QR uses a real QR library. Complex fake QR is the high-bitrate stress pattern.",
+            wraplength=280,
+            foreground="#555555",
+        ).grid(row=3, column=0, sticky="ew", pady=(0, 12))
+
+        next_row = 4
+        next_row = self._add_slider(
+            controls,
+            "Image size",
+            self.size,
+            256,
+            1600,
+            next_row,
+            rebuild=True,
+            help_text="Rendered square image size in pixels. The default 711 was chosen from your high-bitrate test.",
+        )
+        next_row = self._add_slider(
+            controls,
+            "Grid cells",
+            self.cells,
+            32,
+            240,
+            next_row,
+            rebuild=True,
+            help_text="Number of fake QR cells per side. Higher values add spatial detail and encoder workload.",
+        )
+        next_row = self._add_slider(
+            controls,
+            "Target FPS",
+            self.target_fps,
+            1,
+            MAX_TARGET_FPS,
+            next_row,
+            rebuild=False,
+            help_text="Requested display refresh rate. This changes playback timing without rebuilding cached frames.",
+        )
+        next_row = self._add_slider(
+            controls,
+            "Frame pool",
+            self.frame_pool,
+            2,
+            240,
+            next_row,
+            rebuild=True,
+            help_text="Number of pre-rendered frames to cycle through. The default 5 matches your 640 Mbps setup.",
+        )
+
+        ttk.Separator(controls).grid(row=next_row, column=0, sticky="ew", pady=(4, 10))
+        next_row += 1
+
+        ttk.Checkbutton(controls, text="Pause", variable=self.paused).grid(
+            row=next_row, column=0, pady=(0, 4), sticky="w"
+        )
+        next_row += 1
+        ttk.Checkbutton(
+            controls,
+            text="Fullscreen",
+            variable=self.fullscreen,
+            command=self._apply_fullscreen,
+        ).grid(row=next_row, column=0, pady=(0, 4), sticky="w")
+        next_row += 1
+        ttk.Checkbutton(controls, text="Fast overlay", variable=self.fast_overlay).grid(
+            row=next_row, column=0, pady=(0, 2), sticky="w"
+        )
+        next_row += 1
+        ttk.Label(
+            controls,
+            text="Fast overlay updates text every 10 frames to reduce UI overhead at 165 Hz and above.",
+            wraplength=280,
+            foreground="#555555",
+        ).grid(row=next_row, column=0, sticky="ew", pady=(0, 12))
+        next_row += 1
+
+        self.rebuild_button = ttk.Button(controls, text="Rebuild frames", command=self._mark_dirty)
+        self.rebuild_button.grid(row=next_row, column=0, sticky="ew", pady=(0, 10))
+        next_row += 1
+
+        self.status = ttk.Label(controls, text="", anchor="e")
+        self.status.grid(row=next_row, column=0, sticky="ew")
+
     def _add_slider(
         self,
         parent: ttk.Frame,
@@ -148,29 +209,74 @@ class StreamingStressApp:
         variable: tk.DoubleVar,
         min_value: int,
         max_value: int,
-        column: int,
         row: int,
         rebuild: bool,
-    ) -> None:
-        ttk.Label(parent, text=label).grid(row=row, column=column, padx=(0, 6), sticky="w")
+        help_text: str,
+    ) -> int:
+        ttk.Label(parent, text=label).grid(row=row, column=0, sticky="w")
+        row += 1
+
+        control_row = ttk.Frame(parent)
+        control_row.grid(row=row, column=0, sticky="ew", pady=(2, 2))
+        control_row.columnconfigure(0, weight=1)
+        value_text = tk.StringVar(value=str(round(variable.get())))
         slider = ttk.Scale(
-            parent,
+            control_row,
             from_=min_value,
             to=max_value,
             variable=variable,
             orient="horizontal",
             length=140,
-            command=lambda _value: self._mark_dirty() if rebuild else None,
+            command=lambda _value: self._on_slider_change(variable, value_text, rebuild),
         )
-        slider.grid(row=row, column=column + 1, sticky="ew", padx=(0, 6))
-        value = ttk.Label(parent, width=5, anchor="e")
-        value.grid(row=row, column=column + 1, sticky="e", padx=(0, 8))
+        slider.grid(row=0, column=0, sticky="ew", padx=(0, 8))
+        value = ttk.Entry(control_row, width=7, justify="right", textvariable=value_text)
+        value.grid(row=0, column=1, sticky="e")
+        value.bind(
+            "<Return>",
+            lambda _event: self._commit_entry_value(value_text, variable, min_value, max_value, rebuild),
+        )
+        value.bind(
+            "<FocusOut>",
+            lambda _event: self._commit_entry_value(value_text, variable, min_value, max_value, rebuild),
+        )
 
         def sync_label(*_: object) -> None:
-            value.configure(text=str(round(variable.get())))
+            if self.root.focus_get() is not value:
+                value_text.set(str(round(variable.get())))
 
         variable.trace_add("write", sync_label)
         sync_label()
+        row += 1
+
+        ttk.Label(parent, text=help_text, wraplength=280, foreground="#555555").grid(
+            row=row, column=0, sticky="ew", pady=(0, 12)
+        )
+        return row + 1
+
+    def _on_slider_change(self, variable: tk.DoubleVar, value_text: tk.StringVar, rebuild: bool) -> None:
+        value_text.set(str(round(variable.get())))
+        if rebuild:
+            self._mark_dirty()
+
+    def _commit_entry_value(
+        self,
+        value_text: tk.StringVar,
+        variable: tk.DoubleVar,
+        min_value: int,
+        max_value: int,
+        rebuild: bool,
+    ) -> None:
+        try:
+            value = round(float(value_text.get()))
+        except ValueError:
+            value = round(variable.get())
+        value = self._clamp(value, min_value, max_value)
+        value_text.set(str(value))
+        if round(variable.get()) != value:
+            variable.set(value)
+            if rebuild:
+                self._mark_dirty()
 
     def _bind_events(self) -> None:
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -209,7 +315,8 @@ class StreamingStressApp:
     def _mark_dirty(self) -> None:
         if self._dirty_after_id is not None:
             self.root.after_cancel(self._dirty_after_id)
-        self.status.configure(text="rebuilding frame cache...")
+        if hasattr(self, "status"):
+            self.status.configure(text="rebuilding frame cache...")
         self._dirty_after_id = self.root.after(120, self._rebuild_frame_cache)
 
     def _rebuild_frame_cache(self) -> None:

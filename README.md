@@ -55,6 +55,17 @@ Controls:
 - `Fast overlay`: updates the text overlay every 10 frames instead of every
   frame. Keep this enabled when testing very high refresh rates.
 
+The default stress preset is:
+
+- `Image size`: `711`
+- `Grid cells`: `144`
+- `Target FPS`: `165`
+- `Frame pool`: `5`
+
+This matches the measured high-bitrate combination that reached about 640 Mbps.
+Each slider has an editable number box on its right; type a value and press
+Enter, or click away from the field, to apply it.
+
 The app pre-renders the selected frame pool when image parameters change, then
 the hot path only switches cached Tk images. This is much faster than drawing a
 new QR image every frame and is the intended mode for 165 Hz / 365 Hz testing.
