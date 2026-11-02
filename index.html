@@ -9,8 +9,9 @@
   <body>
     <main class="app" id="app">
       <aside class="panel" id="panel">
+        <div class="panel-brand"><span class="brand-mark" aria-hidden="true">S</span><span>STREAMING <b>/</b> LAB</span></div>
         <div class="panel-top">
-          <h1 data-i18n="appTitle">Streaming Stress</h1>
+          <h1 data-i18n="controlEyebrow">测试参数</h1>
           <div class="lang-switch" role="tablist" aria-label="Language">
             <button type="button" data-lang="zh">中文</button>
             <button type="button" data-lang="en">English</button>
@@ -27,48 +28,57 @@
         </section>
 
         <section class="control">
-          <div class="control-head linked-head">
-            <label for="symbolColumns"><span data-i18n="symbolColumnsLabel">符号列数</span></label>
-            <label class="link-toggle" title="Link rows and columns">
-              <input id="symbolGridLinked" type="checkbox">
-              <span aria-hidden="true">↔</span>
-              <span data-i18n="symbolGridLinkLabel">联动行列</span>
-            </label>
+          <div class="control-head">
+            <label for="symbolColumns"><span data-i18n="symbolColumnsLabel">符号网格大小</span></label>
             <input id="symbolColumnsValue" class="value-input" inputmode="numeric">
           </div>
           <input id="symbolColumns" type="range" min="16" max="128" step="1">
           <p data-i18n="symbolColumnsDesc">图案宽度，以 symbol 为单位。默认 64。滑块范围 16-128，输入框可设置更大值。</p>
         </section>
 
-        <section class="control">
-          <div class="control-head">
-            <label for="symbolRows"><span data-i18n="symbolRowsLabel">符号行数</span></label>
-            <input id="symbolRowsValue" class="value-input" inputmode="numeric">
-          </div>
-          <input id="symbolRows" type="range" min="16" max="128" step="1">
-          <p data-i18n="symbolRowsDesc">图案高度，以 symbol 为单位。默认 64。默认与列数联动。</p>
-        </section>
-
-        <section class="control important-control">
-          <div class="control-head">
-            <label for="shapeBits"><span data-i18n="shapeBitsLabel">形状位数</span></label>
-            <input id="shapeBitsValue" class="value-input" inputmode="numeric">
-          </div>
-          <input id="shapeBits" type="range" min="0" max="4" step="1">
-          <p data-i18n="shapeBitsDesc">形状数量为 2^n，强烈影响码率。默认 n=4，即 16 种形状。</p>
-        </section>
-
-        <section class="control">
-          <div class="control-head">
-            <label for="colorBits"><span data-i18n="colorBitsLabel">颜色位数 k</span></label>
-            <input id="colorBitsValue" class="value-input" inputmode="numeric">
-          </div>
-          <input id="colorBits" type="range" min="0" max="8" step="1">
-          <p data-i18n="colorBitsDesc">颜色类型数量为 2^k。k=0 表示 1 种颜色，默认 k=2。</p>
-        </section>
+        <div class="toggles primary-toggles">
+          <label class="latency-mode-toggle"><input id="showLatencyHud" type="checkbox"> <span data-i18n="showLatencyHudLabel">联合延迟测试</span><span class="toggle-state" aria-hidden="true"></span></label>
+          <label><input id="paused" type="checkbox"> <span data-i18n="pausedLabel">暂停图案变化</span></label>
+        </div>
 
         <details class="advanced">
           <summary data-i18n="advancedSummary">高级选项</summary>
+
+          <div class="advanced-grid-link">
+            <label class="link-toggle" title="Link rows and columns">
+              <input id="symbolGridLinked" type="checkbox">
+              <span aria-hidden="true">↔</span>
+              <span data-i18n="symbolGridLinkLabel">联动行列</span>
+            </label>
+            <p data-i18n="gridLinkHelp">取消联动后，可独立调整符号行数。</p>
+          </div>
+
+          <section class="control">
+            <div class="control-head">
+              <label for="symbolRows"><span data-i18n="symbolRowsLabel">符号行数</span></label>
+              <input id="symbolRowsValue" class="value-input" inputmode="numeric">
+            </div>
+            <input id="symbolRows" type="range" min="16" max="128" step="1">
+            <p data-i18n="symbolRowsDesc">图案高度，以 symbol 为单位。默认 64。默认与列数联动。</p>
+          </section>
+
+          <section class="control important-control">
+            <div class="control-head">
+              <label for="shapeBits"><span data-i18n="shapeBitsLabel">形状位数</span></label>
+              <input id="shapeBitsValue" class="value-input" inputmode="numeric">
+            </div>
+            <input id="shapeBits" type="range" min="0" max="4" step="1">
+            <p data-i18n="shapeBitsDesc">形状数量为 2^n，强烈影响码率。默认 n=4，即 16 种形状。</p>
+          </section>
+
+          <section class="control">
+            <div class="control-head">
+              <label for="colorBits"><span data-i18n="colorBitsLabel">颜色位数 k</span></label>
+              <input id="colorBitsValue" class="value-input" inputmode="numeric">
+            </div>
+            <input id="colorBits" type="range" min="0" max="8" step="1">
+            <p data-i18n="colorBitsDesc">颜色类型数量为 2^k。k=0 表示 1 种颜色，默认 k=2。</p>
+          </section>
 
           <section class="control">
             <div class="control-head">
@@ -96,13 +106,31 @@
             <input id="paletteShift" type="range" min="0" max="360" step="1">
             <p data-i18n="paletteShiftDesc">颜色相位偏移。对性能影响很小。</p>
           </section>
+          <div class="toggles advanced-toggles">
+            <label><input id="showHud" type="checkbox"> <span data-i18n="showHudLabel">显示 HUD</span></label>
+            <label><input id="vSyncPace" type="checkbox"> <span data-i18n="vSyncPaceLabel">按目标帧率限速</span></label>
+          </div>
         </details>
 
-        <div class="toggles">
-          <label><input id="showHud" type="checkbox"> <span data-i18n="showHudLabel">显示 HUD</span></label>
-          <label><input id="vSyncPace" type="checkbox"> <span data-i18n="vSyncPaceLabel">按目标帧率限速</span></label>
-          <label><input id="paused" type="checkbox"> <span data-i18n="pausedLabel">暂停图案变化</span></label>
-        </div>
+        <details class="measurement-tools">
+          <summary data-i18n="measurementTools">照片读数</summary>
+          <label for="latencyReadMode" data-i18n="readingMode">读数方式</label>
+          <select id="latencyReadMode">
+            <option value="position" data-i18n="positionMode">矩阵位置 · 0–299</option>
+            <option value="frame" data-i18n="frameMode">完整帧号</option>
+          </select>
+          <div class="reading-inputs">
+            <label><span data-i18n="sourceReadingLabel">主机屏</span><input id="sourceReading" type="number" min="0" step="1" placeholder="—"></label>
+            <label><span data-i18n="clientReadingLabel">串流屏</span><input id="clientReading" type="number" min="0" step="1" placeholder="—"></label>
+          </div>
+          <label class="fps-reading"><span data-i18n="sampleFpsLabel">拍摄时实测 FPS</span><input id="sampleFps" type="number" min="0.1" step="0.1" value="60"></label>
+          <output id="latencyResult">—</output>
+          <p id="latencyResultNote"></p>
+          <div class="measurement-actions">
+            <button id="exportFrameLog" class="secondary-button" type="button" data-i18n="exportFrameLog">导出帧时间 CSV</button>
+            <button id="resetLatency" class="secondary-button" type="button" data-i18n="resetLatency">重新计数</button>
+          </div>
+        </details>
 
         <button id="fullscreenButton" type="button" data-i18n="fullscreenButton">全屏压力模式</button>
         <p class="shortcut-help" data-i18n="shortcutHelp">快捷键：空格暂停/继续，F10 / F 进入全屏，Esc / Q 退出全屏。</p>
@@ -110,8 +138,62 @@
       </aside>
 
       <section class="stage" id="stage">
-        <canvas id="stressCanvas"></canvas>
-        <div class="hud" id="hud"></div>
+        <header class="workspace-header latency-only">
+          <div>
+            <p class="eyebrow" data-i18n="workspaceEyebrow">STREAMING / LAB</p>
+            <h2 data-i18n="workspaceTitle">让延迟，看得见。</h2>
+            <p class="workspace-subtitle" data-i18n="workspaceSubtitle">左侧读时间，右侧施加编码负载。</p>
+          </div>
+          <span class="session-badge"><span class="live-dot" aria-hidden="true"></span><span data-i18n="liveSession">联合测试</span></span>
+        </header>
+
+        <div class="test-workspace">
+          <section class="latency-hud instrument-card" id="latencyHud" aria-hidden="true">
+            <div class="card-heading">
+              <div class="card-title-group"><span class="card-index">01</span><div><h3 data-i18n="latencyTitle">延迟矩阵</h3><p data-i18n="latencySubtitle">30 × 10 · 每个渲染帧前进一格</p></div></div>
+              <span class="card-tag">LATENCY</span>
+            </div>
+
+            <div class="readout-row">
+              <div class="frame-readout"><span class="readout-label" data-i18n="frameLabel">连续帧号</span><strong id="latencyFrame">000000</strong></div>
+              <div class="clock-readout"><span class="readout-label" data-i18n="timeLabel">本地时间</span><time id="latencyTime">00:00:00.000</time></div>
+            </div>
+
+            <div class="matrix-section">
+              <div class="matrix-caption"><span data-i18n="matrixLegend">蛇形读取 · 白格为当前帧</span><span>300 FRAMES</span></div>
+              <div id="latencyMatrix" class="latency-matrix" aria-hidden="true"></div>
+              <div class="matrix-position"><span><span data-i18n="positionLabel">格位</span> <strong id="latencyPosition">000</strong><span class="position-total"> / 299</span></span><span><span data-i18n="cycleLabel">圈数</span> <strong id="latencyCycle">0000</strong></span></div>
+            </div>
+
+            <div class="timing-metrics">
+              <div><span data-i18n="measuredFpsLabel">实测渲染 FPS</span><strong id="latencyFps">—</strong></div>
+              <div><span data-i18n="frameIntervalLabel">平均帧间隔</span><strong id="latencyInterval">— ms</strong></div>
+              <div><span data-i18n="matrixWindowLabel">一圈时长</span><strong id="latencyWindow">— s</strong></div>
+            </div>
+            <div class="latency-card-footer"><span id="cadenceStatus" class="cadence-status">—</span><span class="session-id"><span data-i18n="sessionLabel">会话</span> <span id="latencySession">—</span></span><p data-i18n="photoTip">两块屏幕同框拍摄，对比亮格位置。</p></div>
+          </section>
+
+          <section class="stress-card instrument-card" id="stressCard">
+            <div class="card-heading latency-only">
+              <div class="card-title-group"><span class="card-index">02</span><div><h3 data-i18n="loadTitle">编码负载</h3><p data-i18n="loadSubtitle">动态符号图案</p></div></div>
+              <span class="card-tag">LOAD</span>
+            </div>
+            <div class="stress-surface">
+              <canvas id="stressCanvas"></canvas>
+              <div class="hud" id="hud"></div>
+            </div>
+            <div class="load-details latency-only">
+              <div class="load-primary"><span data-i18n="loadEstimateLabel">图案数据量估算</span><strong id="loadEstimate">— Mbps</strong></div>
+              <div class="load-secondary"><span data-i18n="loadGridLabel">符号网格</span><strong id="loadGrid">64 × 64</strong><span id="loadState" class="load-state">—</span></div>
+              <p class="load-disclaimer" data-i18n="loadDisclaimer">图案用于调节编码压力；实际串流 Mbps 请在串流客户端查看。</p>
+            </div>
+          </section>
+        </div>
+
+        <footer class="workspace-footer latency-only">
+          <div class="capture-guidance"><span class="capture-icon" aria-hidden="true">⌖</span><div><strong data-i18n="captureTitle">拍摄建议</strong><p data-i18n="captureGuide">两屏并排、矩阵同高；使用短曝光，重复采样。</p></div></div>
+          <p class="measurement-scope" data-i18n="measurementScope">测量的是串流屏相对主机屏的显示延迟。</p>
+        </footer>
       </section>
     </main>
 

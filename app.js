@@ -12,6 +12,7 @@ const DEFAULTS = {
   motion: 10,
   paletteShift: 0,
   showHud: true,
+  showLatencyHud: true,
   vSyncPace: true,
   paused: false,
   symbolGridLinked: true,
@@ -40,6 +41,7 @@ const LOCALES = {
     paletteShiftLabel: "色相偏移",
     paletteShiftDesc: "颜色相位偏移。对性能影响很小。",
     showHudLabel: "显示 HUD",
+    showLatencyHudLabel: "联合延迟测试",
     vSyncPaceLabel: "按目标帧率限速",
     pausedLabel: "暂停图案变化",
     fullscreenButtonEnter: "全屏压力模式",
@@ -50,7 +52,7 @@ const LOCALES = {
     statusErrorPrefix: "错误：",
     statusWebgl2Unavailable: "当前浏览器不支持 WebGL2。",
     hud: ({ frame, fps, targetFps, canvasWidth, canvasHeight, symbolColumns, symbolRows, tilePixels, colorBits, colorCount, shapeBits, shapeCount, bitsPerSymbol, dataPerFrameText, estimatedBitrateText, motion, paused }) =>
-      `状态：${paused ? "暂停" : "运行"} | 帧 ${frame}\n帧率：${fps.toFixed(1)} / ${targetFps} FPS | 估计码率：${estimatedBitrateText}\n数据：${dataPerFrameText}/帧 | ${bitsPerSymbol} bit/symbol\n网格：${symbolColumns} x ${symbolRows} symbols | 画布：${canvasWidth} x ${canvasHeight}px\n编码：颜色 ${colorCount} (k=${colorBits}) | 形状 ${shapeCount} (n=${shapeBits})\n渲染：tile ${tilePixels}px | 运动 ${motion}`,
+      `状态：${paused ? "暂停" : "运行"} | 图案步数 ${frame}\n帧率：${fps.toFixed(1)} / ${targetFps} FPS | 图案数据量估算：${estimatedBitrateText}\n数据：${dataPerFrameText}/帧 | ${bitsPerSymbol} bit/symbol\n网格：${symbolColumns} x ${symbolRows} symbols | 画布：${canvasWidth} x ${canvasHeight}px\n编码：颜色 ${colorCount} (k=${colorBits}) | 形状 ${shapeCount} (n=${shapeBits})\n渲染：tile ${tilePixels}px | 运动 ${motion}`,
   },
   en: {
     htmlLang: "en",
@@ -74,6 +76,7 @@ const LOCALES = {
     paletteShiftLabel: "Palette shift",
     paletteShiftDesc: "Color phase offset. Low performance impact.",
     showHudLabel: "Show HUD",
+    showLatencyHudLabel: "Latency + load",
     vSyncPaceLabel: "Respect target FPS",
     pausedLabel: "Pause pattern",
     fullscreenButtonEnter: "Fullscreen stress mode",
@@ -84,9 +87,122 @@ const LOCALES = {
     statusErrorPrefix: "Error: ",
     statusWebgl2Unavailable: "WebGL2 is not available in this browser.",
     hud: ({ frame, fps, targetFps, canvasWidth, canvasHeight, symbolColumns, symbolRows, tilePixels, colorBits, colorCount, shapeBits, shapeCount, bitsPerSymbol, dataPerFrameText, estimatedBitrateText, motion, paused }) =>
-      `Status: ${paused ? "paused" : "running"} | frame ${frame}\nFPS: ${fps.toFixed(1)} / ${targetFps} | Estimated bitrate: ${estimatedBitrateText}\nData: ${dataPerFrameText}/frame | ${bitsPerSymbol} bit/symbol\nGrid: ${symbolColumns} x ${symbolRows} symbols | Canvas: ${canvasWidth} x ${canvasHeight}px\nEncoding: colors ${colorCount} (k=${colorBits}) | shapes ${shapeCount} (n=${shapeBits})\nRender: tile ${tilePixels}px | motion ${motion}`,
+      `Status: ${paused ? "paused" : "running"} | pattern step ${frame}\nFPS: ${fps.toFixed(1)} / ${targetFps} | Pattern data estimate: ${estimatedBitrateText}\nData: ${dataPerFrameText}/frame | ${bitsPerSymbol} bit/symbol\nGrid: ${symbolColumns} x ${symbolRows} symbols | Canvas: ${canvasWidth} x ${canvasHeight}px\nEncoding: colors ${colorCount} (k=${colorBits}) | shapes ${shapeCount} (n=${shapeBits})\nRender: tile ${tilePixels}px | motion ${motion}`,
   },
 };
+
+Object.assign(LOCALES.zh, {
+  symbolColumnsLabel: "符号网格大小",
+  symbolColumnsDesc: "默认 64 × 64。增大网格以提高负载；可在高级选项中单独设置行数。",
+  symbolRowsDesc: "默认与列数相同。取消联动后可单独调节行数。",
+  gridLinkHelp: "取消联动后，可独立调整符号行数。",
+  targetFpsDesc: "默认 200；实际渲染帧率受屏幕刷新率和浏览器限制。",
+  fullscreenButtonEnter: "全屏测试",
+  fullscreenButtonExit: "退出全屏",
+  controlEyebrow: "测试参数",
+  measurementTools: "照片读数",
+  readingMode: "读数方式",
+  positionMode: "矩阵位置 · 0–299",
+  frameMode: "完整帧号",
+  sourceReadingLabel: "主机屏",
+  clientReadingLabel: "串流屏",
+  sampleFpsLabel: "拍摄时源画面 FPS",
+  exportFrameLog: "导出帧时间 CSV",
+  resetLatency: "重新计数",
+  workspaceEyebrow: "STREAMING / LAB",
+  workspaceTitle: "让延迟，看得见。",
+  workspaceSubtitle: "左侧读时间，右侧施加编码负载。",
+  liveSession: "联合测试",
+  latencyTitle: "延迟矩阵",
+  latencySubtitle: "30 × 10 · 每个渲染帧前进一格",
+  frameLabel: "连续帧号",
+  timeLabel: "本地时间",
+  positionLabel: "格位",
+  cycleLabel: "圈数",
+  sessionLabel: "会话",
+  measuredFpsLabel: "实测渲染 FPS",
+  frameIntervalLabel: "平均帧间隔",
+  matrixWindowLabel: "一圈时长",
+  matrixLegend: "蛇形读取 · 白格为当前帧",
+  photoTip: "两屏同框拍摄。亮格重叠时，记录范围。",
+  loadTitle: "编码负载",
+  loadSubtitle: "动态符号图案",
+  loadEstimateLabel: "图案数据量估算",
+  loadGridLabel: "符号网格",
+  loadDisclaimer: "图案用于调节编码压力；实际串流 Mbps 请在串流客户端查看。",
+  captureTitle: "拍摄建议",
+  captureGuide: "两屏并排、矩阵同高；使用短曝光，关闭 HDR / 夜景，多次采样。",
+  measurementScope: "测量串流屏相对主机屏的显示延迟。",
+  cadenceWarming: "正在采样渲染节奏…",
+  cadenceStable: "渲染节奏稳定",
+  cadenceUneven: "帧间隔波动 · 建议用完整帧号读数",
+  loadPaused: "图案暂停",
+  loadRunning: "持续变化",
+  framesUnit: "帧",
+  positionAssumption: "假设主机领先且相差不足一圈。请输入拍摄时源画面实测 FPS（不是目标 FPS 或手机帧率）；帧率波动时改用完整帧号。",
+  frameAssumption: "输入同一会话的完整帧号，优先查询最近 20,000 帧时间记录。完整帧号 = 圈数 × 300 + 格位。",
+  loggedResult: "使用当前会话记录的两帧时间差；这是源渲染时间间隔，照片仍受曝光、屏幕扫描和读数误差影响。",
+  missingLogResult: "记录已过期或不在当前会话中，按输入 FPS 估算。请核对照片会话编号和拍摄时源画面 FPS。",
+  invalidReadings: "请输入有效的非负整数。格位范围 0–299；完整帧号模式要求主机帧号不小于串流帧号。",
+  invalidFps: "请输入拍摄时源画面的有效实测 FPS（大于 0）。",
+  contextLost: "WebGL 上下文丢失，测试已暂停，等待恢复。",
+});
+Object.assign(LOCALES.en, {
+  symbolColumnsLabel: "Symbol grid size",
+  symbolColumnsDesc: "Default 64 × 64. Increase for more load; set independent rows in Advanced.",
+  symbolRowsDesc: "Matches columns by default. Unlink to adjust rows independently.",
+  gridLinkHelp: "Unlink rows and columns to adjust the row count separately.",
+  targetFpsDesc: "Default 200; rendering is bounded by display refresh and the browser.",
+  fullscreenButtonEnter: "Fullscreen test",
+  fullscreenButtonExit: "Exit fullscreen",
+  controlEyebrow: "Test controls",
+  measurementTools: "Photo readings",
+  readingMode: "Reading format",
+  positionMode: "Matrix position · 0–299",
+  frameMode: "Full frame number",
+  sourceReadingLabel: "Host display",
+  clientReadingLabel: "Stream display",
+  sampleFpsLabel: "Source FPS at capture",
+  exportFrameLog: "Export frame times CSV",
+  resetLatency: "New session",
+  workspaceEyebrow: "STREAMING / LAB",
+  workspaceTitle: "Make latency visible.",
+  workspaceSubtitle: "Read time on the left. Apply encoding load on the right.",
+  liveSession: "Combined test",
+  latencyTitle: "Latency matrix",
+  latencySubtitle: "30 × 10 · One cell per rendered frame",
+  frameLabel: "Continuous frame",
+  timeLabel: "Local time",
+  positionLabel: "Position",
+  cycleLabel: "Cycle",
+  sessionLabel: "Session",
+  measuredFpsLabel: "Render FPS",
+  frameIntervalLabel: "Mean interval",
+  matrixWindowLabel: "Cycle duration",
+  matrixLegend: "Snake order · White marks the current frame",
+  photoTip: "Photograph both displays together. Record a range if cells overlap.",
+  loadTitle: "Encoding load",
+  loadSubtitle: "Dynamic symbol pattern",
+  loadEstimateLabel: "Pattern data estimate",
+  loadGridLabel: "Symbol grid",
+  loadDisclaimer: "The pattern varies encoding load. Read actual stream Mbps in your streaming client.",
+  captureTitle: "Capture tips",
+  captureGuide: "Align both matrices at the same height. Use short exposure, disable HDR / night mode, and repeat.",
+  measurementScope: "Measures stream display delay relative to the host display.",
+  cadenceWarming: "Sampling render cadence…",
+  cadenceStable: "Steady render cadence",
+  cadenceUneven: "Uneven frame times · Use full frame readings",
+  loadPaused: "Pattern paused",
+  loadRunning: "Changing",
+  framesUnit: "frames",
+  positionAssumption: "Assumes the host leads by less than one cycle. Enter measured source FPS at capture, not target or camera FPS. Use full frame numbers for uneven cadence.",
+  frameAssumption: "Use full frame numbers from this session to look up the last 20,000 frame times. Full frame = cycle × 300 + position.",
+  loggedResult: "Uses this session's recorded source frame interval. Exposure, display scanning and photo reading still affect the measurement.",
+  missingLogResult: "Frame times are outside this session's retained history; estimated using entered FPS. Check the photo session ID and measured source FPS at capture.",
+  invalidReadings: "Enter nonnegative integers. Positions must be 0–299; full host frame must be at least the stream frame.",
+  invalidFps: "Enter valid measured source FPS at capture (greater than 0).",
+  contextLost: "WebGL context lost. Test paused until recovery.",
+});
 
 const vertexSource = `#version 300 es
 in vec2 aPosition;
@@ -197,6 +313,9 @@ const app = document.getElementById("app");
 const stage = document.getElementById("stage");
 const canvas = document.getElementById("stressCanvas");
 const hud = document.getElementById("hud");
+const latencyHud = document.getElementById("latencyHud");
+const latencyTime = document.getElementById("latencyTime");
+const latencyFrame = document.getElementById("latencyFrame");
 const statusEl = document.getElementById("status");
 const fullscreenButton = document.getElementById("fullscreenButton");
 const langButtons = Array.from(document.querySelectorAll("[data-lang]"));
@@ -214,6 +333,22 @@ let frame = 0;
 let lastFrameTime = performance.now();
 let fps = 0;
 let nextAllowedFrame = 0;
+const MATRIX_COLUMNS = 30;
+const MATRIX_ROWS = 10;
+const MATRIX_SIZE = MATRIX_COLUMNS * MATRIX_ROWS;
+const FRAME_LOG_CAPACITY = 20_000;
+const frameTimes = new Float64Array(FRAME_LOG_CAPACITY);
+const frameIds = new Float64Array(FRAME_LOG_CAPACITY).fill(-1);
+const matrixCells = [];
+const recentIntervals = [];
+let renderFrame = -1;
+let activePosition = -1;
+let lastMetricsTime = -Infinity;
+let sessionId = "";
+let cadenceStable = false;
+const timeOrigin = Number.isFinite(performance.timeOrigin)
+  ? performance.timeOrigin
+  : Date.now() - performance.now();
 
 function locale() {
   return LOCALES[uiState.language] || LOCALES.zh;
@@ -240,6 +375,8 @@ function applyLanguage(lang) {
   for (const button of langButtons) {
     button.classList.toggle("active", button.dataset.lang === uiState.language);
   }
+  updateMeasurementMetrics();
+  updateLatencyCalculation();
   fullscreenButton.textContent = document.fullscreenElement === stage
     ? current.fullscreenButtonExit
     : current.fullscreenButtonEnter;
@@ -302,6 +439,7 @@ function initControl(id, parser = Number) {
     const rounded = Math.round(clamped / step) * step;
     const value = Number(rounded.toFixed(3));
     sync(value);
+    if (id === "targetFps") nextAllowedFrame = 0;
     if (state.symbolGridLinked && (id === "symbolColumns" || id === "symbolRows")) {
       syncControl(id === "symbolColumns" ? "symbolRows" : "symbolColumns", value);
     }
@@ -359,7 +497,7 @@ function getDataPerFrameBits() {
 }
 
 function getEstimatedBitrateBitsPerSecond() {
-  return getDataPerFrameBits() * fps;
+  return state.paused ? 0 : getDataPerFrameBits() * fps;
 }
 
 function formatBits(bits) {
@@ -417,6 +555,157 @@ function updateHudText() {
   const text = translate("hud")(getHudData());
   hud.textContent = text;
   statusEl.textContent = text;
+}
+
+function formatLatencyTime(absoluteTimeMs) {
+  const wholeMs = Math.floor(absoluteTimeMs);
+  const date = new Date(wholeMs);
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}.${String(date.getMilliseconds()).padStart(3, "0")}`;
+}
+
+function updateLatencyHud(now) {
+  const position = renderFrame % MATRIX_SIZE;
+  if (position !== activePosition) {
+    if (activePosition >= 0) matrixCells[activePosition].classList.remove("active");
+    matrixCells[position].classList.add("active");
+    activePosition = position;
+  }
+  latencyTime.textContent = formatLatencyTime(timeOrigin + now);
+  latencyFrame.textContent = String(renderFrame).padStart(6, "0");
+  document.getElementById("latencyPosition").textContent = String(position).padStart(3, "0");
+  document.getElementById("latencyCycle").textContent = String(Math.floor(renderFrame / MATRIX_SIZE)).padStart(3, "0");
+}
+
+function buildLatencyMatrix() {
+  const matrix = document.getElementById("latencyMatrix");
+  const fragment = document.createDocumentFragment();
+  for (let row = 0; row < MATRIX_ROWS; row += 1) {
+    const rowEl = document.createElement("div");
+    rowEl.className = "matrix-row";
+    const cells = document.createElement("div");
+    cells.className = "matrix-cells";
+    const reverse = row % 2 === 1;
+    const first = row * MATRIX_COLUMNS;
+    const left = document.createElement("span");
+    left.className = "matrix-row-label";
+    left.textContent = `${String(first + (reverse ? 29 : 0)).padStart(3, "0")} ${reverse ? "←" : "→"}`;
+    rowEl.append(left, cells);
+    for (let column = 0; column < MATRIX_COLUMNS; column += 1) {
+      const position = first + (reverse ? MATRIX_COLUMNS - 1 - column : column);
+      const cell = document.createElement("span");
+      cell.className = `matrix-cell${column % 5 === 0 ? " major" : ""}`;
+      cell.dataset.position = String(position);
+      cell.textContent = String(position).padStart(3, "0");
+      matrixCells[position] = cell;
+      cells.append(cell);
+    }
+    const right = document.createElement("span");
+    right.className = "matrix-row-label";
+    right.textContent = String(first + (reverse ? 0 : 29)).padStart(3, "0");
+    rowEl.append(right);
+    fragment.append(rowEl);
+  }
+  matrix.append(fragment);
+}
+
+function resetLatencySession() {
+  renderFrame = -1;
+  frameIds.fill(-1);
+  recentIntervals.length = 0;
+  fps = 0;
+  lastFrameTime = 0;
+  lastMetricsTime = -Infinity;
+  nextAllowedFrame = 0;
+  if (activePosition >= 0) matrixCells[activePosition].classList.remove("active");
+  activePosition = -1;
+  sessionId = `${Date.now().toString(36).slice(-4)}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase();
+  document.getElementById("latencySession").textContent = sessionId;
+  for (const id of ["latencyFrame", "latencyTime", "latencyPosition", "latencyCycle"]) {
+    document.getElementById(id).textContent = "—";
+  }
+  for (const id of ["sourceReading", "clientReading"]) document.getElementById(id).value = "";
+  updateLatencyCalculation();
+}
+
+function getFrameTimestamp(id) {
+  const slot = id % FRAME_LOG_CAPACITY;
+  return frameIds[slot] === id ? frameTimes[slot] : null;
+}
+
+function updateLatencyCalculation() {
+  const sourceInput = document.getElementById("sourceReading");
+  const clientInput = document.getElementById("clientReading");
+  const positionMode = document.getElementById("latencyReadMode").value === "position";
+  const output = document.getElementById("latencyResult");
+  const note = document.getElementById("latencyResultNote");
+  for (const input of [sourceInput, clientInput]) {
+    if (positionMode) input.max = String(MATRIX_SIZE - 1);
+    else input.removeAttribute("max");
+  }
+  output.textContent = "—";
+  note.textContent = translate(positionMode ? "positionAssumption" : "frameAssumption");
+  if (sourceInput.value === "" || clientInput.value === "") return;
+  const source = Number(sourceInput.value);
+  const client = Number(clientInput.value);
+  if (![source, client].every((value) => Number.isSafeInteger(value) && value >= 0)
+    || (positionMode && (source >= MATRIX_SIZE || client >= MATRIX_SIZE))
+    || (!positionMode && source < client)) {
+    note.textContent = translate("invalidReadings");
+    return;
+  }
+  const delta = positionMode ? (source - client + MATRIX_SIZE) % MATRIX_SIZE : source - client;
+  if (!positionMode) {
+    const sourceTime = getFrameTimestamp(source);
+    const clientTime = getFrameTimestamp(client);
+    if (sourceTime !== null && clientTime !== null) {
+      output.textContent = `${(sourceTime - clientTime).toFixed(2)} ms · ${delta} ${translate("framesUnit")}`;
+      note.textContent = translate("loggedResult");
+      return;
+    }
+  }
+  const sampleFps = Number(document.getElementById("sampleFps").value);
+  if (!Number.isFinite(sampleFps) || sampleFps <= 0) {
+    note.textContent = translate("invalidFps");
+    return;
+  }
+  output.textContent = `≈ ${(delta * 1000 / sampleFps).toFixed(2)} ms · ${delta} ${translate("framesUnit")}`;
+  note.textContent = translate(positionMode ? "positionAssumption" : "missingLogResult");
+}
+
+function exportFrameLog() {
+  const rows = ["session,frame,position,cycle,raf_time_ms,absolute_time_ms"];
+  for (let id = Math.max(0, renderFrame - FRAME_LOG_CAPACITY + 1); id <= renderFrame; id += 1) {
+    const time = getFrameTimestamp(id);
+    if (time !== null) rows.push(`${sessionId},${id},${id % MATRIX_SIZE},${Math.floor(id / MATRIX_SIZE)},${time.toFixed(3)},${(timeOrigin + time).toFixed(3)}`);
+  }
+  const url = URL.createObjectURL(new Blob([rows.join("\n") + "\n"], { type: "text/csv;charset=utf-8" }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `streaming-frames-${sessionId}.csv`;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function updateMeasurementMetrics() {
+  const mean = recentIntervals.length ? recentIntervals.reduce((sum, dt) => sum + dt, 0) / recentIntervals.length : 0;
+  fps = mean > 0 ? 1000 / mean : 0;
+  cadenceStable = recentIntervals.length >= 30 && recentIntervals.every((dt) => Math.abs(dt - mean) < mean * 0.25);
+  document.getElementById("latencyFps").textContent = fps > 0 ? fps.toFixed(1) : "—";
+  document.getElementById("latencyInterval").textContent = mean > 0 ? `${mean.toFixed(2)} ms` : "—";
+  document.getElementById("latencyWindow").textContent = mean > 0 ? `${(MATRIX_SIZE * mean / 1000).toFixed(2)} s` : "—";
+  const cadence = document.getElementById("cadenceStatus");
+  cadence.textContent = translate(recentIntervals.length < 30 ? "cadenceWarming" : cadenceStable ? "cadenceStable" : "cadenceUneven");
+  cadence.dataset.state = recentIntervals.length < 30 ? "warming" : cadenceStable ? "stable" : "uneven";
+  document.getElementById("loadEstimate").textContent = formatBitrate(getEstimatedBitrateBitsPerSecond());
+  document.getElementById("loadGrid").textContent = `${Math.round(state.symbolColumns)} × ${Math.round(state.symbolRows)}`;
+  document.getElementById("loadState").textContent = translate(state.paused ? "loadPaused" : "loadRunning");
+  // Full frame inputs may now be available in the retained history.
+  if (document.getElementById("latencyReadMode").value === "frame") updateLatencyCalculation();
 }
 
 function compileShader(type, source) {
@@ -491,8 +780,10 @@ function resizeCanvas() {
   const tilePixels = getResolvedTilePixels();
   const width = Math.max(1, Math.round(state.symbolColumns) * SYMBOL_TILE_DIM * tilePixels);
   const height = Math.max(1, Math.round(state.symbolRows) * SYMBOL_TILE_DIM * tilePixels);
-  canvas.style.width = `${width}px`;
-  canvas.style.height = `${height}px`;
+  const surface = canvas.parentElement;
+  const scale = Math.min(1, Math.max(1, surface.clientWidth) / width, Math.max(1, surface.clientHeight) / height);
+  canvas.style.width = `${Math.max(1, width * scale)}px`;
+  canvas.style.height = `${Math.max(1, height * scale)}px`;
   if (canvas.width !== width || canvas.height !== height) {
     canvas.width = width;
     canvas.height = height;
@@ -502,20 +793,25 @@ function resizeCanvas() {
 
 function render(now) {
   requestAnimationFrame(render);
-  if (state.vSyncPace && now < nextAllowedFrame) {
+  if (!gl || gl.isContextLost()) return;
+  // Keep the target timeline instead of accumulating each callback's jitter.
+  if (state.vSyncPace && now + 0.25 < nextAllowedFrame) {
     return;
   }
   const targetInterval = 1000 / Math.max(1, state.targetFps);
-  nextAllowedFrame = now + targetInterval;
+  if (nextAllowedFrame === 0) nextAllowedFrame = now;
+  nextAllowedFrame += targetInterval;
+  if (nextAllowedFrame <= now) nextAllowedFrame = now + targetInterval;
 
-  resizeCanvas();
   if (!state.paused) {
     frame += 1;
   }
-  const dt = now - lastFrameTime;
+  const dt = lastFrameTime > 0 ? now - lastFrameTime : 0;
   lastFrameTime = now;
-  const instant = dt > 0 ? 1000 / dt : 0;
-  fps = fps === 0 ? instant : fps * 0.92 + instant * 0.08;
+  if (dt > 0) {
+    recentIntervals.push(dt);
+    if (recentIntervals.length > 120) recentIntervals.shift();
+  }
   const tilePixels = getResolvedTilePixels();
 
   gl.useProgram(program);
@@ -530,9 +826,19 @@ function render(now) {
   gl.uniform1f(uniforms.paletteShift, state.paletteShift);
   gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-  if (state.showHud && frame % 10 === 0) {
+  renderFrame += 1;
+  const slot = renderFrame % FRAME_LOG_CAPACITY;
+  frameIds[slot] = renderFrame;
+  frameTimes[slot] = now;
+  if (state.showLatencyHud) {
+    updateLatencyHud(now);
+  }
+
+  if (now - lastMetricsTime >= 250) {
+    lastMetricsTime = now;
+    updateMeasurementMetrics();
     updateHudText();
-    hud.style.display = "block";
+    hud.style.display = state.showHud ? "block" : "none";
     statusEl.dataset.mode = "dynamic";
     statusEl.dataset.statusKey = "";
     statusEl.dataset.statusKind = "";
@@ -576,6 +882,21 @@ document.addEventListener("keydown", async (event) => {
   }
 });
 window.addEventListener("resize", resizeCanvas);
+new ResizeObserver(resizeCanvas).observe(canvas.parentElement);
+canvas.addEventListener("webglcontextlost", (event) => {
+  event.preventDefault();
+  setStaticStatus("statusGenericError", "error", translate("contextLost"));
+});
+canvas.addEventListener("webglcontextrestored", () => {
+  try {
+    setupWebGL();
+    resizeCanvas();
+    nextAllowedFrame = 0;
+    setStaticStatus("statusReady");
+  } catch (error) {
+    setStaticStatus("statusGenericError", "error", String(error));
+  }
+});
 
 async function toggleFullscreen() {
   if (document.fullscreenElement === stage) {
@@ -604,9 +925,17 @@ document.getElementById("showHud").addEventListener("change", (event) => {
   state.showHud = event.target.checked;
   hud.style.display = state.showHud ? "block" : "none";
 });
+document.getElementById("showLatencyHud").checked = state.showLatencyHud;
+document.getElementById("showLatencyHud").addEventListener("change", (event) => {
+  state.showLatencyHud = event.target.checked;
+  stage.classList.toggle("latency-mode", state.showLatencyHud);
+  latencyHud.setAttribute("aria-hidden", String(!state.showLatencyHud));
+  resizeCanvas();
+});
 document.getElementById("vSyncPace").checked = state.vSyncPace;
 document.getElementById("vSyncPace").addEventListener("change", (event) => {
   state.vSyncPace = event.target.checked;
+  nextAllowedFrame = 0;
 });
 document.getElementById("paused").checked = state.paused;
 document.getElementById("paused").addEventListener("change", (event) => {
@@ -615,6 +944,15 @@ document.getElementById("paused").addEventListener("change", (event) => {
 });
 
 try {
+  buildLatencyMatrix();
+  resetLatencySession();
+  stage.classList.toggle("latency-mode", state.showLatencyHud);
+  latencyHud.setAttribute("aria-hidden", String(!state.showLatencyHud));
+  for (const id of ["sourceReading", "clientReading", "sampleFps", "latencyReadMode"]) {
+    document.getElementById(id).addEventListener("input", updateLatencyCalculation);
+  }
+  document.getElementById("exportFrameLog").addEventListener("click", exportFrameLog);
+  document.getElementById("resetLatency").addEventListener("click", resetLatencySession);
   for (const button of langButtons) {
     button.addEventListener("click", () => {
       applyLanguage(button.dataset.lang || "zh");
