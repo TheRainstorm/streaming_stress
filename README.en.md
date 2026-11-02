@@ -2,7 +2,7 @@
 
 This is a stress test webpage for Moonlight + Sunshine streaming. The page continuously generates changing, high-complexity patterns to test encoder and decoder latency at different frame rates and bitrates. It also simultaneously performs a network stress test to determine the maximum bitrate the current network environment can support for streaming.
 
-<img width="1127" height="827" alt="demo" src="https://github.com/user-attachments/assets/919d1a8c-f8d4-4909-bd10-221e1df6bf6e" />
+![Streaming latency and load test](./assets/streaming.png)
 
 ## Motivation
 
@@ -17,6 +17,11 @@ want them.
 
 The page continuously generates changing, high-complexity visuals on the GPU
 while keeping CPU usage low.
+
+Rapidly changing timestamps and frame numbers can blur or overlap in phone photos
+of the host and stream displays. The latency matrix moves one bright cell per
+rendered frame, making the two positions easier to compare while the existing
+pattern applies bitrate load.
 
 The pattern is inspired by libcimbar's symbol/tile idea, but it is not a
 compatible encoding format. The image is a `width x height` grid of symbols.
@@ -101,50 +106,31 @@ Hidden by default under `Advanced`:
 
 ## Latency testing
 
-In combined mode, a white marker advances one cell per rendered update along a
-serpentine path in a 30-column × 10-row matrix. Positions range from `0–299`;
-the cumulative frame ID starts at `0`, and the cycle number is `floor(frame / 300)`.
-Local time uses `HH:MM:SS.mmm`; the counter no longer resets every ten seconds.
-The matrix and WebGL pattern update in one render callback, although browser
-compositing and physical display scanout can still affect presentation.
+`Latency + load` is enabled by default. A white block moves one cell per rendered
+frame through a 30×10 snake grid, with positions numbered `0–299`.
 
-1. Open the page on the host and stream that same image through Moonlight. Do not
-   run independent clocks on both devices.
-2. Place the host and client screens side by side, align the matrices vertically,
-   and photograph both screens in a single shot.
-3. Read each marker position. If the host is ahead and the delay is less than one
-   cycle, `frame difference = (host position - client position + 300) % 300`.
-4. Enter the **measured source render FPS at the time of the photograph** into the
-   position calculator: `estimated delay ms = frame difference * 1000 / FPS`.
-   This is neither the target FPS nor the camera FPS. Adjust the default `60` to
-   match your measurement.
-5. If cumulative frame IDs are readable, use full-frame mode. When both IDs belong
-   to the same session and remain in the retained log, the calculator subtracts
-   their recorded timestamps. Otherwise it falls back to an FPS-based estimate.
+Open the page on the host and stream it through Moonlight. Place the host and
+client screens side by side, align the matrices at the same height, and photograph
+both in one shot.
 
-At a stable 60 FPS, host position `4` and client position `298` are six cells
-apart, approximately `100 ms`. A 300-cell cycle spans about 5 seconds at 60 FPS
-or 2.5 seconds at 120 FPS. Cycle numbers and cumulative IDs resolve whole-cycle
-ambiguity. The interface shows windowed mean render FPS, mean frame interval,
-and pacing stability; prefer logged timestamps when timing is uneven.
+Read both positions and use the photo calculator:
 
-The most recent 20,000 frame timestamps can be exported as CSV. Hiding combined
-mode does not stop counting or clear the log. `New session` creates a new measurement
-session, clears retained records, and starts frame IDs at zero. Export before
-resetting or reloading, and never combine identical IDs from different sessions.
+```text
+frame difference = (host position - client position + 300) % 300
+delay ms ≈ frame difference * 1000 / measured source FPS
+```
 
-Use a short exposure and disable HDR/night-mode frame merging. In manual mode,
-`1/1000 s` is a useful starting point; adjust for brightness. If several neighboring
-cells are visible, read the minimum and maximum full frame IDs on each display.
-The frame-difference interval is `[host min - client max, host max - client min]`;
-convert using logged times or stable FPS. Resolve cycle boundaries first, and do
-not treat the brightest cell alone as an exact reading.
+This estimate assumes steady rendering, the host ahead, and a delay shorter than
+one cycle. Use the source's measured render FPS at capture time; six frames at
+60 FPS is about 100 ms. Full-frame mode uses recorded timestamps from the same
+session when available, otherwise it estimates from FPS.
 
-This measures **client display delay relative to the host's physical display**,
-including differences between the display paths. It is not full input-to-display
-latency. Camera rolling shutter, display scan phase, and pixel response affect the
-result. Take multiple samples and report a range or median. Implementation details
-and limitations are in [the latency handoff](./LATENCY_HUD_HANDOFF.md).
+Use a short exposure with HDR and night mode off. If several cells appear bright,
+record a range and take more samples. The result is the client's display delay
+relative to the host screen, not input-to-display latency.
+
+The last 20,000 frame timestamps can be exported as CSV. Export before resetting
+or reloading. See the [latency handoff](./LATENCY_HUD_HANDOFF.md) for details.
 
 ## Combining latency and bitrate tests
 
