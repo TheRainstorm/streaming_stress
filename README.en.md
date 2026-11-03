@@ -107,7 +107,8 @@ Hidden by default under `Advanced`:
 ## Latency testing
 
 `Latency + load` is enabled by default. A white block moves one cell per rendered
-frame through a 30×10 snake grid, with positions numbered `0–299`.
+frame through a 30×10 grid. Each row runs left to right, then jumps to the next
+row’s leftmost cell. Position `299` wraps to `0`.
 
 Open the page on the host and stream it through Moonlight. Place the host and
 client screens side by side, align the matrices at the same height, and photograph

@@ -123,7 +123,7 @@ Object.assign(LOCALES.zh, {
   measuredFpsLabel: "实测渲染 FPS",
   frameIntervalLabel: "平均帧间隔",
   matrixWindowLabel: "一圈时长",
-  matrixLegend: "蛇形读取 · 白格为当前帧",
+  matrixLegend: "逐行向右 · 白格为当前帧",
   photoTip: "两屏同框拍摄。亮格重叠时，记录范围。",
   loadTitle: "编码负载",
   loadSubtitle: "动态符号图案",
@@ -179,7 +179,7 @@ Object.assign(LOCALES.en, {
   measuredFpsLabel: "Render FPS",
   frameIntervalLabel: "Mean interval",
   matrixWindowLabel: "Cycle duration",
-  matrixLegend: "Snake order · White marks the current frame",
+  matrixLegend: "Left to right · White marks the current frame",
   photoTip: "Photograph both displays together. Record a range if cells overlap.",
   loadTitle: "Encoding load",
   loadSubtitle: "Dynamic symbol pattern",
@@ -587,14 +587,13 @@ function buildLatencyMatrix() {
     rowEl.className = "matrix-row";
     const cells = document.createElement("div");
     cells.className = "matrix-cells";
-    const reverse = row % 2 === 1;
     const first = row * MATRIX_COLUMNS;
     const left = document.createElement("span");
     left.className = "matrix-row-label";
-    left.textContent = `${String(first + (reverse ? 29 : 0)).padStart(3, "0")} ${reverse ? "←" : "→"}`;
+    left.textContent = `${String(first).padStart(3, "0")} →`;
     rowEl.append(left, cells);
     for (let column = 0; column < MATRIX_COLUMNS; column += 1) {
-      const position = first + (reverse ? MATRIX_COLUMNS - 1 - column : column);
+      const position = first + column;
       const cell = document.createElement("span");
       cell.className = `matrix-cell${column % 5 === 0 ? " major" : ""}`;
       cell.dataset.position = String(position);
@@ -604,7 +603,7 @@ function buildLatencyMatrix() {
     }
     const right = document.createElement("span");
     right.className = "matrix-row-label";
-    right.textContent = String(first + (reverse ? 0 : 29)).padStart(3, "0");
+    right.textContent = String(first + MATRIX_COLUMNS - 1).padStart(3, "0");
     rowEl.append(right);
     fragment.append(rowEl);
   }
